@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/index.ts";
 import { aiEnabled, rewriteBullets } from "@/lib/ai.ts";
 import * as data from "@/lib/data.ts";
+import { plural } from "@/lib/format.ts";
 import { gapReport } from "@/lib/keywords.ts";
 import { seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
@@ -69,14 +70,28 @@ export async function completeNextStep(form: FormData) {
   revalidatePath("/", "layout");
 }
 
+function contactFields(raw: Record<string, FormDataEntryValue>) {
+  const name = str(raw, "name");
+  const url = str(raw, "url", 2000);
+  return name && safeUrl(url) ? { name, title: str(raw, "title"), email: str(raw, "email"), url } : null;
+}
+
 export async function addContact(form: FormData) {
   await requireUser();
   const raw = fields(form);
-  const name = str(raw, "name");
-  const url = str(raw, "url", 2000);
-  if (!name || !safeUrl(url)) return;
-  data.addContact(db(), id(raw.applicationId), { name, title: str(raw, "title"), email: str(raw, "email"), url });
+  const contact = contactFields(raw);
+  if (!contact) return;
+  data.addContact(db(), id(raw.applicationId), contact);
   revalidatePath(`/applications/${raw.applicationId}`);
+}
+
+export async function updateContact(form: FormData) {
+  await requireUser();
+  const raw = fields(form);
+  const contact = contactFields(raw);
+  if (!contact) return;
+  data.updateContact(db(), id(raw.id), contact);
+  revalidatePath(`/applications/${id(raw.applicationId)}`);
 }
 
 export async function deleteContact(form: FormData) {
@@ -93,6 +108,15 @@ export async function addNote(form: FormData) {
   if (!body) return;
   data.addNote(db(), id(raw.applicationId), body, isStage(stage) ? stage : null);
   revalidatePath(`/applications/${raw.applicationId}`);
+}
+
+export async function updateNote(form: FormData) {
+  await requireUser();
+  const raw = fields(form);
+  const body = str(raw, "body", 20000);
+  if (!body) return;
+  data.updateNote(db(), id(raw.id), body);
+  revalidatePath(`/applications/${id(raw.applicationId)}`);
 }
 
 export async function deleteNote(form: FormData) {
@@ -148,7 +172,7 @@ export async function importFile(_prev: FormState, form: FormData): Promise<Form
     const isJson = file.name.toLowerCase().endsWith(".json") || text.trimStart().startsWith("{");
     const res = isJson ? importJson(db(), JSON.parse(text)) : importCsv(db(), text);
     revalidatePath("/", "layout");
-    return { message: `Imported ${res.applications} applications${res.questions ? ` and ${res.questions} questions` : ""}.` };
+    return { message: `Imported ${plural(res.applications, "application")}${res.questions ? ` and ${plural(res.questions, "question")}` : ""}.` };
   } catch (e) {
     return { error: e instanceof SyntaxError ? "That JSON file could not be parsed." : (e as Error).message };
   }

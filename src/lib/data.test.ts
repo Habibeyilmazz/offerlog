@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../db/index.ts";
-import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote } from "./data.ts";
+import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote } from "./data.ts";
 import { due, today } from "./format.ts";
 import { seedDemo } from "./seed.ts";
 import { exportCsv, exportJson, importCsv, importJson } from "./transfer.ts";
@@ -40,6 +40,17 @@ describe("applications", () => {
     seedDemo(d, now);
     const app = listApplications(d).find((a) => a.company === "Fernhill Games")!;
     expect(due(app.nextStepDue!, today(now)).label).toBe("Due tomorrow");
+  });
+  it("edits a note and a contact in place", () => {
+    const id = createApplication(d, input({ company: "A", role: "B" }));
+    addNote(d, id, "first draft", "interview", "2026-11-01T00:00:00.000Z");
+    addContact(d, id, { name: "Sam", title: "", email: "", url: "" });
+    const before = getApplication(d, id)!;
+    updateNote(d, before.notes[0].id, "final text");
+    updateContact(d, before.contacts[0].id, { name: "Sam Ortiz", title: "Recruiter", email: "sam@example.com", url: "" });
+    const after = getApplication(d, id)!;
+    expect(after.notes[0]).toMatchObject({ body: "final text", stage: "interview", createdAt: "2026-11-01T00:00:00.000Z" });
+    expect(after.contacts[0]).toMatchObject({ name: "Sam Ortiz", title: "Recruiter", email: "sam@example.com" });
   });
   it("stores the weekly goal", () => {
     expect(getWeeklyGoal(d)).toBe(5);

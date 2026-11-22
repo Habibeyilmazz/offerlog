@@ -59,12 +59,21 @@ export function addContact(d: Db, applicationId: number, c: { name: string; titl
   d.insert(contacts).values({ applicationId, ...c }).run();
 }
 
+export function updateContact(d: Db, id: number, c: { name: string; title: string; email: string; url: string }) {
+  d.update(contacts).set(c).where(eq(contacts.id, id)).run();
+}
+
 export function deleteContact(d: Db, id: number) {
   d.delete(contacts).where(eq(contacts.id, id)).run();
 }
 
 export function addNote(d: Db, applicationId: number, body: string, stage: Stage | null, at = nowIso()) {
   d.insert(notes).values({ applicationId, body, stage, createdAt: at }).run();
+}
+
+/** Changes the text only; the note keeps its date and its place in the timeline. */
+export function updateNote(d: Db, id: number, body: string) {
+  d.update(notes).set({ body }).where(eq(notes.id, id)).run();
 }
 
 export function deleteNote(d: Db, id: number) {
