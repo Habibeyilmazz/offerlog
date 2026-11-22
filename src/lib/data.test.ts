@@ -153,12 +153,12 @@ describe("import/export", () => {
     importCsv(d, "company,role,location\nAcme,'=SUM quoted,'s-Hertogenbosch\n");
     // A leading apostrophe before a formula character is the guard, so the first import strips it.
     expect(getApplication(d, 1)!.app).toMatchObject({ role: "=SUM quoted", location: "'s-Hertogenbosch" });
-    updateApplication(d, 1, { role: "'=SUM quoted" });
+    updateApplication(d, 1, { role: "'=SUM quoted", nextStep: "'\t=call" });
     const csv = exportCsv(d);
     expect(csv).toContain(",'s-Hertogenbosch,"); // nothing added where no formula could start
     const other = openDb(":memory:");
     importCsv(other, csv);
-    expect(getApplication(other, 1)!.app).toMatchObject({ role: "'=SUM quoted", location: "'s-Hertogenbosch" });
+    expect(getApplication(other, 1)!.app).toMatchObject({ role: "'=SUM quoted", location: "'s-Hertogenbosch", nextStep: "'\t=call" });
   });
   it("reads semicolon-separated CSV from spreadsheets set to a European locale", () => {
     expect(importCsv(d, "company;role;salary_min\r\nAcme, Inc.;Dev;50000\r\n").applications).toBe(1);
@@ -185,6 +185,7 @@ describe("import/export", () => {
     expect(() => importCsv(d, row("5"), now)).toThrow(/Row 2 createdAt: "5" is not a valid date/); // Date.parse reads this as 2001
     expect(() => importCsv(d, row("45000"), now)).toThrow(/not a valid date/); // a spreadsheet serial number, read as year 45000
     expect(() => importCsv(d, row("2027-01-01"), now)).toThrow(/Row 2 createdAt: "2027-01-01" is in the future/);
+    expect(() => importCsv(d, row("2026-02-30"), now)).toThrow(/not a valid date/); // Date.parse rolls this over to March 2
     expect(importCsv(d, row("11/20/2026 9:30"), now).applications).toBe(1); // what a spreadsheet writes back is still fine
     expect(importCsv(d, row("2026-11-22T20:00:00Z"), now).applications).toBe(1); // a clock a few hours ahead is tolerated
   });

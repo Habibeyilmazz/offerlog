@@ -6,9 +6,9 @@ export function parseCsv(text: string): string[][] {
   let field = "";
   let quoted = false;
   const src = text.replace(/^﻿/, "");
-  const firstLine = src.slice(0, src.search(/[\r\n]|$/));
-  // Spreadsheets set to a European locale save with semicolons.
-  const sep = firstLine.includes(";") && !firstLine.includes(",") ? ";" : ",";
+  // Spreadsheets set to a European locale save with semicolons; the header line (quoted parts aside) decides.
+  const header = (src.match(/[^\r\n]*\S[^\r\n]*/)?.[0] ?? "").replace(/"[^"]*"/g, "");
+  const sep = header.includes(";") && !header.includes(",") ? ";" : ",";
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (quoted) {

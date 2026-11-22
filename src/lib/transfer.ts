@@ -3,7 +3,7 @@ import { applications, contacts, events, notes, questions } from "../db/schema.t
 import { parseCsv, toCsv } from "./csv.ts";
 import { getWeeklyGoal, setWeeklyGoal } from "./data.ts";
 import { isStage, QUESTION_CATEGORIES } from "./stages.ts";
-import { parseApplication, safeUrl, str, ValidationError } from "./validate.ts";
+import { isIsoDate, parseApplication, safeUrl, str, ValidationError } from "./validate.ts";
 
 const CSV_COLUMNS = [
   ["company", "company"],
@@ -66,12 +66,14 @@ export interface ImportResult {
 /** An ISO timestamp from any date Date.parse reads, if it names a four-digit year and is not later than a day after `now`. */
 function timestamp(v: unknown, fallback: string, what: string, now: string): string {
   if (v == null || v === "") return fallback;
-  const t = Date.parse(String(v));
-  // Date.parse turns "5" into 2001 and a spreadsheet serial like "45000" into the year 45000.
-  if (Number.isNaN(t) || !/\d{4}/.test(String(v)) || !/^\d{4}-/.test(new Date(t).toISOString()))
-    throw new Error(`${what}: "${String(v)}" is not a valid date.`);
+  const s = String(v);
+  const t = Date.parse(s);
+  const ymd = /^\d{4}-\d{2}-\d{2}/.exec(s)?.[0];
+  // Date.parse turns "5" into 2001, a spreadsheet serial like "45000" into the year 45000, and Feb 30 into March 2.
+  if (Number.isNaN(t) || !/\d{4}/.test(s) || !/^\d{4}-/.test(new Date(t).toISOString()) || (ymd && !isIsoDate(ymd)))
+    throw new Error(`${what}: "${s}" is not a valid date.`);
   // A day of slack for a backup made on a machine whose clock runs ahead.
-  if (t > Date.parse(now) + 86_400_000) throw new Error(`${what}: "${String(v)}" is in the future.`);
+  if (t > Date.parse(now) + 86_400_000) throw new Error(`${what}: "${s}" is in the future.`);
   return new Date(t).toISOString();
 }
 
@@ -162,7 +164,7 @@ export function importCsv(d: Db, text: string, now = new Date().toISOString()): 
       const raw: Record<string, unknown> = {};
       keys.forEach((k, j) => {
         // Undo the spreadsheet formula guard added by exportCsv.
-        if (k) raw[k] = (cells[j] ?? "").replace(/^'(?='*[=+\-@])/, "");
+        if (k) raw[k] = (cells[j] ?? "").replace(/^'(?='*[=+\-@\t\r])/, "");
       });
       insertApplication(tx as unknown as Db, raw, `Row ${i + 2}`, now);
     });

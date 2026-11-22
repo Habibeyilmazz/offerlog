@@ -212,8 +212,8 @@ export interface GapReport {
 }
 
 function words(text: string): string[] {
-  // Any script, so "développeur" stays one word; \p{M} keeps combining marks such as the dot in a lowercased "İ".
-  return text.toLowerCase().match(/\p{L}[\p{L}\p{M}\p{N}+#.-]*[\p{L}\p{M}\p{N}+#]|\p{L}/gu) ?? [];
+  // Any script, so "développeur" stays one word, typed with a combining accent or not; \p{M} keeps marks NFC cannot merge.
+  return text.normalize("NFC").toLowerCase().match(/\p{L}[\p{L}\p{M}\p{N}+#.-]*[\p{L}\p{M}\p{N}+#]|\p{L}/gu) ?? [];
 }
 
 export function gapReport(jobDescription: string, resume: string): GapReport {

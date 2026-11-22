@@ -8,6 +8,10 @@ describe("csv", () => {
   it("skips blank lines and a BOM", () => {
     expect(parseCsv("﻿a\n\n b \n")).toEqual([["a"], [" b "]]);
   });
+  it("detects a semicolon separator past blank lines and quoted commas in the header", () => {
+    expect(parseCsv('\ncompany;role;"Notes, misc"\nAcme, Inc.;Dev;x\n')).toEqual([["company", "role", "Notes, misc"], ["Acme, Inc.", "Dev", "x"]]);
+    expect(parseCsv('a,"b;c"\n1,2\n')).toEqual([["a", "b;c"], ["1", "2"]]);
+  });
   it("rejects an unterminated quote", () => {
     expect(() => parseCsv('"abc')).toThrow();
   });

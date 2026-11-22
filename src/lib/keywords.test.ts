@@ -49,6 +49,8 @@ describe("gapReport", () => {
       "разработчик",
     ]);
     expect(gapReport("Développeur développeur", "Développeur").otherTerms).toEqual([]);
+    // The same word typed with a combining accent (as macOS file names and some editors store it) still matches.
+    expect(gapReport("Développeur développeur", "De\u0301veloppeur").otherTerms).toEqual([]);
   });
   it("is deterministic", () => {
     expect(gapReport(jd, resume)).toEqual(r);
