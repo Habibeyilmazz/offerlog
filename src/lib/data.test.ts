@@ -87,10 +87,23 @@ describe("correcting the timeline", () => {
     expect(setEventDate(d, added.id, "2026-11-12", now)).toBeNull(); // 15:00 would land after the 09:00 move
     const evs = getApplication(d, id)!.events;
     expect(evs.map((e) => e.id)).toEqual([added.id, screening.id]);
-    expect(Date.parse(evs[1].at) - Date.parse(evs[0].at)).toBe(1000);
+    expect(Date.parse(evs[1].at) - Date.parse(evs[0].at)).toBe(1);
     const late = createApplication(d, input({ company: "C", role: "D" }), local(1, 18));
     expect(setEventDate(d, getApplication(d, late)!.events[0].id, "2026-11-22", now)).toBeNull();
     expect(getApplication(d, late)!.events[0].at).toBe(now.toISOString());
+  });
+  it("refuses a nudge that would cross midnight or pass now", () => {
+    const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(20, 9));
+    moveApplication(d, id, "screening", new Date(2026, 10, 21, 0, 0, 0, 0).toISOString()); // exactly midnight
+    const [added] = getApplication(d, id)!.events;
+    expect(setEventDate(d, added.id, "2026-11-21", now)).toMatch(/no room/); // would land at 23:59:59.999 on the 20th
+    expect(today(new Date(getApplication(d, id)!.events[0].at))).toBe("2026-11-20");
+    // A neighbour a moment before now: the entry stays between it and now, never in the future.
+    const recent = createApplication(d, input({ company: "C", role: "D", stage: "applied" }), new Date(now.getTime() - 100).toISOString());
+    moveApplication(d, recent, "screening", now.toISOString());
+    const moved = getApplication(d, recent)!.events[1];
+    expect(setEventDate(d, moved.id, "2026-11-22", now)).toBeNull();
+    expect(getApplication(d, recent)!.events[1].at).toBe(now.toISOString());
   });
   it("removes a mistaken move, so the funnel no longer counts it", () => {
     const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(1, 9));

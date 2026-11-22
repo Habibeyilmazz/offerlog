@@ -80,10 +80,11 @@ export function setEventDate(d: Db, eventId: number, day: string, now = new Date
       return `This came before the move to ${STAGE_LABELS[next.toStage as Stage]} on ${shortDate(next.at)}. Pick that day or earlier, or change that entry first.`;
     // On the same day as a neighbour, nudge the time so the order of the timeline stays the same.
     let t = Math.min(Date.parse(onDay(ev.at, day)), now.getTime());
-    if (prev) t = Math.max(t, Date.parse(prev.at) + 1000);
-    if (next) t = Math.min(t, Date.parse(next.at) - 1000);
-    if ((prev && t <= Date.parse(prev.at)) || (next && t >= Date.parse(next.at)))
-      return "The entries around this one are too close together to keep them in order.";
+    if (prev) t = Math.max(t, Date.parse(prev.at) + 1);
+    if (next) t = Math.min(t, Date.parse(next.at) - 1);
+    // The nudge must not cross midnight, pass now, or leave the order broken.
+    if ((prev && t <= Date.parse(prev.at)) || (next && t >= Date.parse(next.at)) || t > now.getTime() || today(new Date(t)) !== day)
+      return "There is no room on that day to keep this entry between the ones around it. Pick another day.";
     const at = new Date(t).toISOString();
     tx.update(events).set({ at }).where(eq(events.id, eventId)).run();
     if (i === 0) tx.update(applications).set({ createdAt: at }).where(eq(applications.id, ev.applicationId)).run();
