@@ -40,15 +40,16 @@ function money(raw: Raw, key: string): number | null | "bad" {
   return Number(s.replace(/k$/i, "")) * (/k$/i.test(s) ? 1000 : 1);
 }
 
+/** A real calendar day as YYYY-MM-DD in the years 1900 to 2999: a year typed short into a date field arrives as 0026. */
 export function isIsoDate(s: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
+  return /^(19|2\d)\d{2}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
 }
 
 /** Optional YYYY-MM-DD field that may not be later than `todayIso`; null when empty. */
 export function pastDay(raw: Raw, key: string, todayIso: string): Result<string | null> {
   const s = String(raw[key] ?? "").trim();
   if (!s) return { ok: true, value: null };
-  if (!isIsoDate(s)) return { ok: false, error: "Dates must be YYYY-MM-DD." };
+  if (!isIsoDate(s)) return { ok: false, error: "Dates must be YYYY-MM-DD, in the years 1900 to 2999." };
   if (s > todayIso) return { ok: false, error: "The date cannot be in the future." };
   return { ok: true, value: s };
 }
@@ -122,7 +123,7 @@ function parseApplicationFields(raw: Raw): Result<ApplicationInput> {
   if (!(WORK_MODES as readonly string[]).includes(workMode)) return { ok: false, error: "Work mode must be onsite, hybrid or remote." };
 
   const nextStepDue = str(raw, "nextStepDue", 40) || null;
-  if (nextStepDue && !isIsoDate(nextStepDue)) return { ok: false, error: "Next step date must be YYYY-MM-DD." };
+  if (nextStepDue && !isIsoDate(nextStepDue)) return { ok: false, error: "Next step date must be YYYY-MM-DD, in the years 1900 to 2999." };
 
   return {
     ok: true,

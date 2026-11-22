@@ -41,6 +41,14 @@ describe("parseApplication", () => {
     expect(isIsoDate("2028-02-29")).toBe(true);
     expect(isIsoDate("2027-02-29")).toBe(false);
   });
+  it("refuses a year typed short, which a date field sends as 0026 or 0526", () => {
+    // Saved, it showed as "548148 days overdue" on the board.
+    expect(parseApplication({ company: "A", role: "B", nextStepDue: "0526-02-11" })).toMatchObject({ ok: false, error: expect.stringContaining("1900 to 2999") });
+    expect(pastDay({ d: "0026-11-22" }, "d", "2026-11-22")).toMatchObject({ ok: false, error: expect.stringContaining("1900 to 2999") });
+    expect(isIsoDate("1900-01-01")).toBe(true);
+    expect(isIsoDate("2999-12-31")).toBe(true);
+    expect(isIsoDate("3000-01-01")).toBe(false);
+  });
 });
 
 describe("parseContact", () => {

@@ -37,7 +37,7 @@ export function ApplicationForm({ app }: { app?: Application }) {
             <div style={{ display: "grid", gap: 4 }}>
               <label>
                 Date
-                <input name="stageDate" type="date" defaultValue={value("stageDate")} aria-describedby="stage-date-hint" />
+                <input name="stageDate" type="date" min="1900-01-01" defaultValue={value("stageDate")} aria-describedby="stage-date-hint" />
               </label>
               <span id="stage-date-hint" className="small muted">
                 When it reached this stage, if not today.
@@ -95,7 +95,7 @@ export function ApplicationForm({ app }: { app?: Application }) {
           </label>
           <label>
             Next step due
-            <input name="nextStepDue" type="date" defaultValue={value("nextStepDue", app?.nextStepDue ?? "")} />
+            <input name="nextStepDue" type="date" min="1900-01-01" max="2999-12-31" defaultValue={value("nextStepDue", app?.nextStepDue ?? "")} />
           </label>
         </div>
         <label>

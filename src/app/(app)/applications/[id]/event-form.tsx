@@ -12,7 +12,7 @@ export function EventForm({ id, day, max, first, revertTo }: { id: number; day: 
       <input type="hidden" name="id" value={id} />
       <label>
         Date
-        <input type="date" name="date" required defaultValue={value("date", day)} max={max} />
+        <input type="date" name="date" required min="1900-01-01" defaultValue={value("date", day)} max={max} />
       </label>
       {state.error && (
         <p className="error" role="alert">
