@@ -4,7 +4,7 @@
 
 **A self-hosted job-search tracker for students and early-career developers: kanban, timeline, interview prep, resume keyword gaps and reply-rate analytics in one SQLite file.**
 
-Track every application on a board, keep notes and interview prep in one place, check your resume against a posting without sending it anywhere, and see which channels actually get replies. No account, no tracking, no cloud: it runs on your machine and your data is one file you can back up.
+Track every application on a board, keep notes and interview prep in one place, check your resume against a posting without sending it anywhere, and see which channels actually get replies. No account and no cloud service: it runs on your machine, your tracker lives in one SQLite file, and the JSON export is a complete backup of it.
 
 ![Recorded from the running app with demo data: dragging a card to Screening, an application's timeline and prep, the resume tailor's keyword gap report, and analytics](docs/demo.gif)
 
@@ -21,7 +21,7 @@ npm run build
 npm start                                     # http://localhost:4220
 ```
 
-Sign in with the password you chose. On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it only works while the tracker is empty). `npm run db:seed` does the same from the command line and replaces everything.
+Sign in with the password you chose. On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it is only offered while there are no applications and no questions, because it replaces both). `npm run db:seed` does the same from the command line and replaces everything.
 
 ### Docker
 
@@ -52,7 +52,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 - **Correct the history**: analytics are only as good as the dates behind them, so each stage change on the timeline can be moved to the day it really happened (a reply you logged three days late), or removed when it was a mistake (a card dropped in the wrong column, which would otherwise count as an offer in the funnel forever). Removing the latest change moves the application back to its previous stage. When you add an application you were already working on, give the day it reached its stage; in a CSV import, the `created_at` column does the same.
 - **Contacts** per application (name, title, email, profile link), editable in place.
 - **Interview prep** per stage (screening, interview, offer), with the matching questions from your **question bank** listed next to your notes.
-- **Resume tailor**: paste a job description (or load one saved on an application) and your resume as plain text or Markdown. A local, deterministic report shows which skills and tools from the posting your resume covers or misses, seniority words on both sides, and repeated posting words you never use. With `ANTHROPIC_API_KEY` set, you can also ask Claude to rewrite specific bullet points toward the posting; it is told not to invent experience.
+- **Resume tailor**: paste a job description (or load one saved on an application) and your resume as plain text or Markdown. A local, deterministic report shows which skills and tools from the posting your resume covers or misses, seniority words on both sides, and repeated posting words you never use. With `ANTHROPIC_API_KEY` set, you can also ask Claude to rewrite specific bullet points toward the posting; it is told not to invent experience. Your resume text is remembered in this browser only (`localStorage`); it is not stored in the database or included in exports.
 - **Analytics**: funnel with stage-to-stage conversion, response rate and median time to reply per source, and applications per week against a weekly goal you set.
 - **Import and export**: full JSON backup and restore, and CSV for spreadsheets (comma or semicolon separated). Imports are validated and all-or-nothing.
 - **Single-user login** with a hashed password, an HttpOnly session cookie and rate-limited sign-in.
@@ -72,11 +72,11 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 
 ## How it works
 
-- **Stack**: Next.js App Router with server components and server actions, SQLite through Drizzle ORM and `better-sqlite3`. Migrations in `drizzle/` run automatically on startup.
+- **Stack**: Next.js App Router with server components and server actions, SQLite through Drizzle ORM and `better-sqlite3`. Migrations in `drizzle/` run automatically the first time the app opens the database.
 - **Stage history is the source of truth.** Each stage change writes a row to `events`. An application counts as sent from its first move past wishlist (rejected and ghosted imply it was sent). The funnel counts the furthest stage each application reached, so skipping a stage counts as passing it. A reply is a move to screening, interview, offer or rejected; ghosted is not a reply. Time to reply is measured from the applied event, so an application logged straight into screening counts as replied but has no reply time. The weekly chart counts each application once, in the week it was sent. See `src/lib/analytics.ts`. Corrections keep the history consistent (`setEventDate` and `removeEvent` in `src/lib/data.ts`): a redated change cannot jump past its neighbours, and after a removal the following entries are re-linked and a move straight back is dropped too.
 - **Keyword gaps** (`src/lib/keywords.ts`) match a curated vocabulary of about 120 skills and tools, with aliases (`k8s` counts as Kubernetes, `Postgres` as PostgreSQL) and symbol-aware word boundaries so `Java` does not match inside `JavaScript` and `C++`, `C#` and `.NET` work. No network call, no model: the same input always gives the same report.
-- **AI rewrite** (`src/lib/ai.ts`) sends only the job description and the bullets you paste to the Anthropic Messages API (`claude-opus-5-5`, with server-side fallback on refusals). It only runs when you press the button and the key is set.
-- **Security**: the password is checked against an scrypt hash with a constant-time compare. Sessions are random 256-bit tokens; only an HMAC of each, keyed by the password hash, is stored, so changing `OFFERLOG_PASSWORD_HASH` signs out every session. The cookie is HttpOnly and `SameSite=Lax`. Failed sign-ins are limited to 5 per client (keyed on the last `X-Forwarded-For` hop, the one your proxy adds) and 30 overall per 15 minutes. Every server action and route checks the session and validates its input; Next.js rejects server action requests whose `Origin` does not match the host. CSV exports neutralise spreadsheet formulas and are sent with `Cache-Control: no-store`. Every response forbids framing and MIME sniffing. CI fails on a known advisory in a runtime dependency.
+- **AI rewrite** (`src/lib/ai.ts`) sends only the job description, the bullets you paste and the list of posting keywords your resume misses to the Anthropic Messages API (`claude-opus-5-5`, with server-side fallback on refusals). It only runs when you press the button and the key is set.
+- **Security**: the password is checked against an scrypt hash with a constant-time compare. Sessions are random 256-bit tokens; only an HMAC of each, keyed by the password hash, is stored, so changing `OFFERLOG_PASSWORD_HASH` signs out every session. The cookie is HttpOnly and `SameSite=Lax`. Failed sign-ins are limited to 5 per client (keyed on the last `X-Forwarded-For` hop, the one your proxy adds) and 30 overall per 15 minutes. Every server action and route except sign-in and the health check checks the session, and every one validates its input; Next.js rejects server action requests whose `Origin` does not match the host. CSV exports neutralise spreadsheet formulas and are sent with `Cache-Control: no-store`. Every response forbids framing and MIME sniffing. CI fails on a moderate or worse advisory in a runtime dependency.
 
 ## Development
 
@@ -117,7 +117,7 @@ Not built yet:
 - Calendar export (ICS) for next-step reminders and interviews.
 - A user-editable keyword vocabulary for the resume tailor.
 - A manual light/dark switch (today the theme follows the system setting).
-- Keep the page when a delete, "Mark done" or weekly-goal save fails on a dropped connection (today these show the in-app error page; **Try again** brings the page back and saved data is untouched).
+- Keep the page when a delete, "Mark done" or weekly-goal save fails on a dropped connection (today these show the in-app error page and **Try again** brings the page back; reload to see whether the action went through).
 - Multiple users.
 
 ## License

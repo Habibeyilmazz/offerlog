@@ -23,5 +23,5 @@ Out of scope, by design (see "How it works" in the README):
 
 - Running the app on plain HTTP across a network. Compose binds to `127.0.0.1`; put a TLS reverse proxy in front for other devices.
 - Anything that needs the password, shell access to the host, or write access to the SQLite file or `.env`.
-- The four moderate `npm audit` advisories in drizzle-kit's bundled esbuild dev server. drizzle-kit is a dev dependency used only to generate migrations, and that server is never started. CI fails on any advisory in a runtime dependency.
+- The four moderate `npm audit` advisories in drizzle-kit's bundled esbuild dev server. drizzle-kit is a dev dependency used only to generate migrations, and that server is never started. CI fails on a moderate or worse advisory in a runtime dependency.
 - The missing `script-src` Content-Security-Policy. Next.js inline scripts would need per-request nonces; React escapes all user text, and the app never renders user HTML.

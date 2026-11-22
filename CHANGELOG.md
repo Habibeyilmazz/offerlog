@@ -4,7 +4,35 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, reliability round: the app was pushed with odd, empty, huge, non-English and malformed input, dropped connections and long names, in a real browser and against `src/lib`. Each bug below was reproduced first, got a failing test (vitest or the Playwright smoke test), then the fix.
+Latest, launch round: making the repository presentable and honest for a first visitor. The README quickstart was followed literally on a fresh clone from GitHub (clone, `npm ci --ignore-scripts`, hash a password, build, start, sign in, load demo data, open every page): it works as written.
+
+### Added
+
+- `docs/demo.gif` at the top of the README, recorded from the running app with demo data by the new `scripts/demo.mjs` (Playwright video, converted with ffmpeg): a drag to Screening, an application's timeline and prep, the tailor's gap report, analytics.
+- README sections: "Compared with other options" (spreadsheet, Trello/Notion, Huntr/Teal, Jobscan, and when to pick each instead), "Contributing", and every screenshot in `docs/screenshots` in the gallery (question bank and import/export were unused).
+- `CONTRIBUTING.md` (setup, the checks CI runs, conventions), `SECURITY.md` (private reporting, scope, known by-design limits), issue templates for bugs and feature requests that ask for demo data, never real applications.
+- `assets/social-preview.png` (1280x640, the logo and the real board screenshot). GitHub only takes a social preview through the web UI: Settings, General, Social preview.
+- Repository description reworded; topics `typescript`, `interview-prep`, `job-application-tracker` added.
+
+### Fixed
+
+- Data loss: **Load demo data** on an empty board deleted the question bank (and the weekly goal), because it only checked for applications while the seed replaces everything. Someone who starts by filling the question bank lost it in one click. The button is now only offered, and the action only runs, when there are no applications and no questions (`isEmptyTracker` in `src/lib/seed.ts`); otherwise the board says why. Found by the Codex review of this round.
+- Resume tailor, with `ANTHROPIC_API_KEY` set: a refused or failed rewrite emptied the bullets box (React resets a form after its action), and a dropped connection replaced the page with the error screen, losing a pasted job description. The rewrite form now uses `useFormAction` like the other forms, which is now generic over the action's state. Checked in Chromium against an unreachable API endpoint and offline.
+- An API error without a status (a connection failure) read "API error : Connection error."; it now reads "API error: Connection error.".
+- `src/lib/ai.test.ts` returned the mock from `beforeEach`, which Vitest runs as a teardown, so it called the Claude client mock after every test; a test of a rejected call failed because of it.
+- README accuracy: the tailor's vocabulary has 122 skills and tools, not "about 140"; migrations run when the app first opens the database, not "on startup"; the AI rewrite also sends the list of missing keywords; sign-in and the health check are the routes without a session check; CI fails on moderate or worse runtime advisories, not on any; "no tracking" is gone (Next.js build telemetry is on unless `NEXT_TELEMETRY_DISABLED=1`); the resume text is kept in the browser only and is not in exports. Most were found by the Codex review.
+
+### Checked, nothing to change
+
+- Delete buttons, "Mark done", "Load demo data" and the weekly-goal form while offline: the in-app error page appears and **Try again** brings the page back once the connection is back (run in Chromium with "Delete question"; the others are the same plain `<form action>` pattern). Nothing typed is lost except a weekly-goal number. If the request reached the server before the connection dropped, the action did happen; a reload shows it. Left as is and listed in the README roadmap.
+
+### Notes for the next agent
+
+- `SECURITY.md` points to GitHub's private vulnerability reporting "if the Security tab shows it". It is currently disabled on the repository; enabling it is a repository setting the owner can turn on.
+- Regenerate `docs/demo.gif` after UI changes: `node scripts/demo.mjs <baseUrl> <password> docs/demo.gif` against a freshly seeded instance (it moves the Saltmarsh Studio card), then reseed. Keep it under about 4 MB.
+- Still open: the AI rewrite is only tested with a mocked client (no key available), no manual theme switch, no `script-src` CSP, 4 dev-only drizzle-kit advisories.
+
+Earlier, reliability round: the app was pushed with odd, empty, huge, non-English and malformed input, dropped connections and long names, in a real browser and against `src/lib`. Each bug below was reproduced first, got a failing test (vitest or the Playwright smoke test), then the fix.
 
 ### Fixed
 

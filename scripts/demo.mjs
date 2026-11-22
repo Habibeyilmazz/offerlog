@@ -7,7 +7,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const [base = "http://localhost:4220", password, out = "docs/demo.gif"] = process.argv.slice(2);
+const [baseArg = "http://localhost:4220", password, out = "docs/demo.gif"] = process.argv.slice(2);
+const base = baseArg.replace(/\/+$/, "");
 const size = { width: 1280, height: 800 };
 const videoDir = mkdtempSync(join(tmpdir(), "offerlog-demo-"));
 const browser = await chromium.launch();
@@ -53,6 +54,7 @@ await glide(card);
 await page.mouse.down();
 await glide(target);
 await page.mouse.up();
+await target.locator(".card", { hasText: "Saltmarsh Studio" }).waitFor({ timeout: 5000 }); // fail rather than record a failed move
 await pause(1500);
 
 // Open an application: timeline, contacts, prep.
