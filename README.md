@@ -47,17 +47,22 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 
 - **Board** with seven stages: wishlist, applied, screening, interview, offer, rejected, ghosted. Drag cards between columns, or use the stage menu on each card (works with keyboard and touch), and filter the board by company, role, place or source. An **Up next** strip lists next steps by due date and flags overdue ones.
 - **Applications** with company, role, posting link, salary range and currency, location and work mode (onsite, hybrid, remote), source, job description, and a next step with a due date.
-- **Timeline** per application: every stage change is recorded automatically, alongside your own dated notes. Marking a next step done logs it to the timeline.
-- **Contacts** per application (name, title, email, profile link).
+- **Timeline** per application: every stage change is recorded automatically, alongside your own dated notes. Marking a next step done logs it to the timeline. Notes can be edited in place and keep their original date.
+- **Contacts** per application (name, title, email, profile link), editable in place.
 - **Interview prep** per stage (screening, interview, offer), with the matching questions from your **question bank** listed next to your notes.
 - **Resume tailor**: paste a job description (or load one saved on an application) and your resume as plain text or Markdown. A local, deterministic report shows which skills and tools from the posting your resume covers or misses, seniority words on both sides, and repeated posting words you never use. With `ANTHROPIC_API_KEY` set, you can also ask Claude to rewrite specific bullet points toward the posting; it is told not to invent experience.
 - **Analytics**: funnel with stage-to-stage conversion, response rate and median time to reply per source, and applications per week against a weekly goal you set.
 - **Import and export**: full JSON backup and restore, and CSV for spreadsheets. Imports are validated and all-or-nothing.
 - **Single-user login** with a hashed password, an HttpOnly session cookie and rate-limited sign-in.
+- **Light and dark theme** following your system setting, a phone layout where board columns snap one at a time, keyboard access throughout (skip link, visible focus, a stage menu on every card), and no animation when reduced motion is requested.
 
 | Application detail | Resume tailor | Analytics |
 | --- | --- | --- |
 | ![Application detail with timeline, contacts and prep](docs/screenshots/application.png) | ![Keyword gap report](docs/screenshots/tailor.png) | ![Funnel, weekly goal and sources](docs/screenshots/analytics.png) |
+
+| Dark theme, editing a note | Board on a phone | Analytics on a phone, dark |
+| --- | --- | --- |
+| ![Application detail in the dark theme with a note's edit panel open](docs/screenshots/application-dark.png) | ![The board at 390px wide, one column in view](docs/screenshots/mobile-board.png) | ![Analytics at 390px wide in the dark theme](docs/screenshots/mobile-analytics-dark.png) |
 
 ## How it works
 
@@ -79,15 +84,16 @@ npm run db:generate  # after changing src/db/schema.ts
 
 The Playwright test uses Chromium; install it once with `npx playwright install chromium`.
 
+README screenshots come from a running, seeded instance: `node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots`.
+
 ## Roadmap
 
 Not built yet:
 
 - Saved filters and sorting options on the board (today: a quick text filter).
 - Calendar export (ICS) for next-step reminders and interviews.
-- Editing a saved contact or note in place (today: delete and re-add).
 - A user-editable keyword vocabulary for the resume tailor.
-- Dark theme.
+- A manual light/dark switch (today the theme follows the system setting).
 - Multiple users.
 
 ## License
