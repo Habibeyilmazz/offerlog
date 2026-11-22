@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addNote, completeNextStep, deleteApplication, deleteNote, updateNote } from "@/app/actions.ts";
+import { completeNextStep, deleteApplication, deleteNote } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
 import { getApplication, listQuestions } from "@/lib/data.ts";
 import { due, money, place, shortDate, today } from "@/lib/format.ts";
@@ -11,6 +11,7 @@ import { StagePill } from "../../stage-pill.tsx";
 import { SubmitButton } from "../../submit-button.tsx";
 import { ContactForm } from "./contact-form.tsx";
 import { EventForm } from "./event-form.tsx";
+import { NoteForm } from "./note-form.tsx";
 
 type Entry =
   | { kind: "event"; key: string; at: string; id: number; from: Stage | null; to: Stage }
@@ -31,20 +32,14 @@ function NoteEditor({ id, appId, body, what }: { id: number; appId: number; body
       <summary>
         Edit<span className="sr-only"> {what}</span>
       </summary>
-      <form action={updateNote} className="edit-form">
-        <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="applicationId" value={appId} />
-        <label>
-          <span className="sr-only">Text of the {what}</span>
-          <textarea name="body" rows={3} required maxLength={20000} defaultValue={body} />
-        </label>
+      <NoteForm id={id} appId={appId} body={body} label={`Text of the ${what}`} rows={3} className="edit-form">
         <div className="edit-actions">
           <SubmitButton className="btn secondary">Save</SubmitButton>
           <SubmitButton className="linklike danger" formAction={deleteNote} formNoValidate>
             Delete {what}
           </SubmitButton>
         </div>
-      </form>
+      </NoteForm>
     </details>
   );
 }
@@ -114,14 +109,16 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
 
           <section className="panel" aria-labelledby="timeline-h">
             <h2 id="timeline-h">Timeline</h2>
-            <form action={addNote} className="inline-form" style={{ marginBottom: 20 }}>
-              <input type="hidden" name="applicationId" value={app.id} />
-              <label>
-                <span className="sr-only">New note</span>
-                <textarea name="body" rows={2} required maxLength={20000} placeholder="Add a dated note: a call, an email, how it went…" />
-              </label>
+            <NoteForm
+              appId={app.id}
+              label="New note"
+              rows={2}
+              placeholder="Add a dated note: a call, an email, how it went…"
+              className="inline-form"
+              style={{ marginBottom: 20 }}
+            >
               <SubmitButton>Add note</SubmitButton>
-            </form>
+            </NoteForm>
             <ol className="timeline">
               {timeline.map((t) => (
                 <li key={t.key}>
@@ -261,17 +258,18 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                       </ul>
                     </details>
                   )}
-                  <form action={addNote} className="inline-form" style={{ marginTop: 10 }}>
-                    <input type="hidden" name="applicationId" value={app.id} />
-                    <input type="hidden" name="stage" value={s} />
-                    <label>
-                      <span className="sr-only">Prep note for {STAGE_LABELS[s]}</span>
-                      <input name="body" required maxLength={20000} placeholder={`Prep note for ${STAGE_LABELS[s].toLowerCase()}`} />
-                    </label>
+                  <NoteForm
+                    appId={app.id}
+                    stage={s}
+                    label={`Prep note for ${STAGE_LABELS[s]}`}
+                    placeholder={`Prep note for ${STAGE_LABELS[s].toLowerCase()}`}
+                    className="inline-form"
+                    style={{ marginTop: 10 }}
+                  >
                     <SubmitButton className="btn secondary">
                       Add<span className="sr-only"> {STAGE_LABELS[s].toLowerCase()} prep note</span>
                     </SubmitButton>
-                  </form>
+                  </NoteForm>
                 </div>
               );
             })}

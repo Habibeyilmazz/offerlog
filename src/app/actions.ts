@@ -117,23 +117,35 @@ export async function deleteContact(form: FormData) {
   revalidatePath(`/applications/${id(form.get("applicationId"))}`);
 }
 
-export async function addNote(form: FormData) {
-  await requireUser();
-  const raw = fields(form);
-  const body = str(raw, "body", 20000);
-  const stage = str(raw, "stage");
-  if (!body) return;
-  data.addNote(db(), id(raw.applicationId), body, isStage(stage) ? stage : null);
-  revalidatePath(`/applications/${raw.applicationId}`);
+function noteBody(raw: Record<string, unknown>): FormState & { body?: string } {
+  try {
+    const body = str(raw, "body", 20000);
+    return body ? { body } : { error: "Write the note first." };
+  } catch (e) {
+    if (e instanceof ValidationError) return { error: e.message };
+    throw e;
+  }
 }
 
-export async function updateNote(form: FormData) {
+export async function addNote(_prev: FormState, form: FormData): Promise<FormState> {
   await requireUser();
   const raw = fields(form);
-  const body = str(raw, "body", 20000);
-  if (!body) return;
+  const { body, error } = noteBody(raw);
+  if (!body) return { error };
+  const stage = str(raw, "stage");
+  data.addNote(db(), id(raw.applicationId), body, isStage(stage) ? stage : null);
+  revalidatePath(`/applications/${id(raw.applicationId)}`);
+  return {};
+}
+
+export async function updateNote(_prev: FormState, form: FormData): Promise<FormState> {
+  await requireUser();
+  const raw = fields(form);
+  const { body, error } = noteBody(raw);
+  if (!body) return { error };
   data.updateNote(db(), id(raw.id), body);
   revalidatePath(`/applications/${id(raw.applicationId)}`);
+  return {};
 }
 
 export async function deleteNote(form: FormData) {

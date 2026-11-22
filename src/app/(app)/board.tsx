@@ -56,7 +56,7 @@ export function Board({ cards }: { cards: CardData[] }) {
       </div>
     )}
     {error && (
-      <p className="error" role="alert">
+      <p className="error" role="alert" style={{ marginBottom: 10 }}>
         {error}
       </p>
     )}

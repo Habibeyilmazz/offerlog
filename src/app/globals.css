@@ -414,6 +414,10 @@ textarea:hover {
 .inline-form > label {
   flex: 1 1 160px;
 }
+.inline-form > .error {
+  flex-basis: 100%;
+  order: 1;
+}
 
 /* ---------- stage marks ---------- */
 

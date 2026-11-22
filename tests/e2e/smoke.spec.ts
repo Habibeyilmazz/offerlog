@@ -26,10 +26,25 @@ test("track an application end to end", async ({ page }) => {
   await page.getByLabel("Date", { exact: true }).fill("2025-03-03"); // backfilled: applied before using offerlog
   await page.getByLabel("Source").fill("Referral");
   await page.getByLabel("Salary from").fill("50k");
-  await page.getByLabel("Salary to").fill("60000");
+  await page.getByLabel("Salary to").fill("40k");
   await page.getByLabel("Next step", { exact: true }).fill("Email the recruiter");
   await page.getByLabel("Next step due").fill("2030-01-15");
   await page.getByLabel("Job description").fill("Junior developer with React, TypeScript and Docker experience.");
+  // A refused save keeps everything typed, so only the wrong field needs fixing
+  await page.getByRole("button", { name: "Add application" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Minimum salary is above the maximum." })).toBeVisible();
+  await expect(page.getByLabel("Company")).toHaveValue("Acme Robotics");
+  await expect(page.getByLabel("Stage")).toHaveValue("applied");
+  await expect(page.getByLabel("Date", { exact: true })).toHaveValue("2025-03-03");
+  await expect(page.getByLabel("Job description")).toHaveValue(/React, TypeScript and Docker/);
+  await page.getByLabel("Salary to").fill("60000");
+  // So does a save that cannot reach the server
+  await page.context().setOffline(true);
+  await page.getByRole("button", { name: "Add application" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "the connection dropped" })).toBeVisible();
+  await expect(page.getByLabel("Salary to")).toHaveValue("60000");
+  await expect(page.getByLabel("Job description")).toHaveValue(/React, TypeScript and Docker/);
+  await page.context().setOffline(false);
   await page.getByRole("button", { name: "Add application" }).click();
   await expect(page.getByRole("heading", { name: "Acme Robotics", level: 1 })).toBeVisible();
   const appPath = new URL(page.url()).pathname;
@@ -37,7 +52,14 @@ test("track an application end to end", async ({ page }) => {
 
   // Dated note shows up in the timeline
   await page.getByPlaceholder(/Add a dated note/).fill("Recruiter call went well");
+  // Offline, the note stays in the box instead of being lost
+  await page.context().setOffline(true);
   await page.getByRole("button", { name: "Add note" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "the connection dropped" })).toBeVisible();
+  await expect(page.getByPlaceholder(/Add a dated note/)).toHaveValue("Recruiter call went well");
+  await page.context().setOffline(false);
+  await page.getByRole("button", { name: "Add note" }).click();
+  await expect(page.getByPlaceholder(/Add a dated note/)).toHaveValue("");
   await expect(page.locator(".timeline")).toContainText("Recruiter call went well");
   await expect(page.locator(".timeline")).toContainText("Added as Applied");
   await expect(page.locator(".timeline")).toContainText("Mar 3, 2025");
