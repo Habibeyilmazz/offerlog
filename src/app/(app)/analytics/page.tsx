@@ -15,7 +15,8 @@ export default async function AnalyticsPage() {
   const goal = getWeeklyGoal(db());
   const rows = funnel(events);
   const reps = replies(events);
-  const answered = reps.filter((r) => r.days !== null);
+  const replied = reps.filter((r) => r.replied).length;
+  const replyDays = reps.flatMap((r) => (r.days === null ? [] : [r.days]));
   const sources = responseBySource(apps, events);
   const weeks = weeklyApplied(events, new Date());
   const top = Math.max(goal, ...weeks.map((w) => w.count), 1);
@@ -37,11 +38,11 @@ export default async function AnalyticsPage() {
           <span>applications sent</span>
         </div>
         <div className="stat">
-          <strong>{pct(reps.length ? answered.length / reps.length : null)}</strong>
+          <strong>{pct(reps.length ? replied / reps.length : null)}</strong>
           <span>got a reply</span>
         </div>
         <div className="stat">
-          <strong>{days(median(answered.map((r) => r.days as number)))}</strong>
+          <strong>{days(median(replyDays))}</strong>
           <span>median time to reply</span>
         </div>
         <div className="stat">

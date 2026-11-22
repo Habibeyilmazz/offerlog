@@ -18,6 +18,11 @@ describe("funnel", () => {
     expect(rows[1].conversion).toBeCloseTo(1 / 3);
     expect(rows[3].conversion).toBe(1);
   });
+  it("counts rejected or ghosted applications as sent even without an applied event", () => {
+    const rows = funnel([ev(1, "wishlist", "2026-11-01"), ev(1, "ghosted", "2026-11-09"), ev(2, "rejected", "2026-11-02")]);
+    expect(rows[0].reached).toBe(2);
+    expect(rows[1].reached).toBe(0);
+  });
   it("leaves conversion empty when the previous stage is empty", () => {
     expect(funnel([ev(1, "wishlist", "2026-11-01")]).every((r) => r.reached === 0 && r.conversion === null)).toBe(true);
   });
@@ -27,6 +32,12 @@ describe("replies", () => {
   it("measures days from applying to the first reply; rejection counts, ghosting does not", () => {
     const byId = Object.fromEntries(replies(events).map((r) => [r.applicationId, r.days]));
     expect(byId).toEqual({ 1: 3, 2: 10, 3: null });
+    expect(replies(events).map((r) => r.replied)).toEqual([true, true, false]);
+  });
+  it("counts an application logged straight into screening as replied with unknown time", () => {
+    expect(replies([ev(9, "screening", "2026-11-05"), ev(9, "interview", "2026-11-09")])).toEqual([
+      { applicationId: 9, sentAt: "2026-11-05T10:00:00.000Z", replied: true, days: null },
+    ]);
   });
 });
 
@@ -48,6 +59,10 @@ describe("weekly", () => {
   it("buckets applied events into the last N weeks", () => {
     const rows = weeklyApplied(events, new Date("2026-11-22T12:00:00Z"), 3);
     expect(rows).toEqual([{ week: "2026-11-02", count: 2 }, { week: "2026-11-09", count: 1 }, { week: "2026-11-16", count: 0 }]);
+  });
+  it("counts each application once, in the week it was sent", () => {
+    const back = [ev(1, "applied", "2026-11-17"), ev(1, "screening", "2026-11-18"), ev(1, "applied", "2026-11-19"), ev(2, "interview", "2026-11-18")];
+    expect(weeklyApplied(back, new Date("2026-11-22T12:00:00Z"), 1)).toEqual([{ week: "2026-11-16", count: 2 }]);
   });
   it("median", () => {
     expect(median([])).toBeNull();

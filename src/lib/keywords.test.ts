@@ -25,6 +25,11 @@ describe("gapReport", () => {
     expect(names(only.skills.missing)).toEqual(["JavaScript"]);
     expect(names(gapReport("Java developer", "JavaScript").skills.missing)).toEqual(["Java"]);
   });
+  it("counts overlapping aliases once per mention", () => {
+    const o = gapReport("Tailwind CSS and a REST API. More REST.", "");
+    expect(o.tools.missing).toEqual([{ name: "Tailwind", count: 1 }]);
+    expect(o.skills.missing).toContainEqual({ name: "REST", count: 2 });
+  });
   it("finds seniority words", () => {
     expect(r.seniority.job).toContain("junior");
     expect(r.seniority.resume).toEqual([]);

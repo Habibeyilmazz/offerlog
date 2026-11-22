@@ -189,8 +189,11 @@ const MATCHERS = TERMS.map((t) => ({
   regexes: [t.name, ...(t.aliases ?? [])].map((a) => termRegex(a, t.exactCase ?? false)),
 }));
 
+/** Mentions of a term; overlapping aliases ("REST" inside "REST API") count once per position. */
 function countTerm(text: string, regexes: RegExp[]): number {
-  return regexes.reduce((n, re) => n + (text.match(re)?.length ?? 0), 0);
+  const starts = new Set<number>();
+  for (const re of regexes) for (const m of text.matchAll(re)) starts.add(m.index);
+  return starts.size;
 }
 
 export interface TermHit {

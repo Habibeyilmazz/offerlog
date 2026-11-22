@@ -78,7 +78,7 @@ export function ApplicationForm({ app }: { app?: Application }) {
         </label>
         <label className="wide">
           Job description
-          <textarea name="description" rows={6} defaultValue={app?.description} placeholder="Paste the posting to use it in the resume tailor." />
+          <textarea name="description" rows={6} maxLength={20000} defaultValue={app?.description} placeholder="Paste the posting to use it in the resume tailor." />
         </label>
       </div>
       {state.error && (

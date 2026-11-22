@@ -66,6 +66,8 @@ describe("import/export", () => {
     expect(() => importCsv(d, "company,role,stage\nA,B,applied\nC,D,hired\n")).toThrow(/Row 3/);
     expect(exportJson(d).applications).toEqual([]);
     expect(() => importJson(d, { app: "other" })).toThrow(/not an offerlog/);
+    expect(() => importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B" }, null, 42] })).toThrow(/list of objects/);
+    expect(() => importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B", notes: "oops" }] })).toThrow(/Application 1 notes/);
     expect(() => importCsv(d, "name,title\nx,y\n")).toThrow(/company and role/);
   });
 });

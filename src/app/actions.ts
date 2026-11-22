@@ -13,7 +13,7 @@ import { seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
 import { isStage, QUESTION_CATEGORIES } from "@/lib/stages.ts";
 import { importCsv, importJson } from "@/lib/transfer.ts";
-import { parseApplication, safeUrl, str } from "@/lib/validate.ts";
+import { parseApplication, safeUrl, str, ValidationError } from "@/lib/validate.ts";
 
 export type FormState = { error?: string; message?: string };
 
@@ -104,13 +104,20 @@ export async function deleteNote(form: FormData) {
 export async function saveQuestion(_prev: FormState, form: FormData): Promise<FormState> {
   await requireUser();
   const raw = fields(form);
-  const question = str(raw, "question", 2000);
+  let question: string, answer: string;
+  try {
+    question = str(raw, "question", 2000);
+    answer = str(raw, "answer", 20000);
+  } catch (e) {
+    if (e instanceof ValidationError) return { error: e.message };
+    throw e;
+  }
   const category = str(raw, "category");
   const stage = str(raw, "stage");
   if (!question) return { error: "Write the question first." };
   if (!(QUESTION_CATEGORIES as readonly string[]).includes(category)) return { error: "Pick a category." };
   if (!isStage(stage)) return { error: "Pick a stage." };
-  data.saveQuestion(db(), { id: raw.id ? id(raw.id) : undefined, question, category, stage, answer: str(raw, "answer", 20000) });
+  data.saveQuestion(db(), { id: raw.id ? id(raw.id) : undefined, question, category, stage, answer });
   revalidatePath("/", "layout");
   return { message: raw.id ? "Saved." : "Added to the bank." };
 }
@@ -159,9 +166,15 @@ export async function aiRewrite(_prev: FormState & { text?: string }, form: Form
   await requireUser();
   if (!aiEnabled()) return { error: "AI rewrite needs ANTHROPIC_API_KEY on the server." };
   const raw = fields(form);
-  const jd = str(raw, "jobDescription", 30000);
-  const resume = str(raw, "resume", 30000);
-  const bullets = str(raw, "bullets", 8000);
+  let jd: string, resume: string, bullets: string;
+  try {
+    jd = str(raw, "jobDescription", 30000);
+    resume = str(raw, "resume", 30000);
+    bullets = str(raw, "bullets", 8000);
+  } catch (e) {
+    if (e instanceof ValidationError) return { error: e.message };
+    throw e;
+  }
   if (!jd || !bullets) return { error: "Paste a job description and the bullets you want rewritten." };
   const report = gapReport(jd, resume || bullets);
   const missing = [...report.skills.missing, ...report.tools.missing].map((t) => t.name);

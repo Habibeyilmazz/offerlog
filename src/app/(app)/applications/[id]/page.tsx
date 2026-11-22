@@ -79,7 +79,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
               <input type="hidden" name="applicationId" value={app.id} />
               <label>
                 <span className="sr-only">New note</span>
-                <textarea name="body" rows={2} required placeholder="Add a dated note: a call, an email, how it went…" />
+                <textarea name="body" rows={2} required maxLength={20000} placeholder="Add a dated note: a call, an email, how it went…" />
               </label>
               <button className="btn">Add note</button>
             </form>
@@ -247,7 +247,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                     <input type="hidden" name="stage" value={s} />
                     <label>
                       <span className="sr-only">Prep note for {STAGE_LABELS[s]}</span>
-                      <input name="body" required placeholder={`Prep note for ${STAGE_LABELS[s].toLowerCase()}`} />
+                      <input name="body" required maxLength={20000} placeholder={`Prep note for ${STAGE_LABELS[s].toLowerCase()}`} />
                     </label>
                     <button className="btn secondary">Add</button>
                   </form>

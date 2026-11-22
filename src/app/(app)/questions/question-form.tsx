@@ -37,7 +37,7 @@ export function QuestionForm({ q }: { q?: Question }) {
         </label>
         <label className="wide">
           Your answer notes
-          <textarea name="answer" rows={3} defaultValue={q?.answer} placeholder="Bullet points, a STAR outline, links to revisit…" />
+          <textarea name="answer" rows={3} maxLength={20000} defaultValue={q?.answer} placeholder="Bullet points, a STAR outline, links to revisit…" />
         </label>
       </div>
       <div className="form-actions">

@@ -15,6 +15,7 @@ describe("parseApplication", () => {
     [{ company: "A", role: "B", currency: "dollars" }, "3-letter"],
     [{ company: "A", role: "B", workMode: "moon" }, "Work mode"],
     [{ company: "A", role: "B", nextStepDue: "2026-02-30" }, "YYYY-MM-DD"],
+    [{ company: "A", role: "B", description: "x".repeat(20001) }, "longer than 20000"],
   ])("rejects %o", (raw, msg) => {
     const r = parseApplication(raw);
     expect(r.ok).toBe(false);

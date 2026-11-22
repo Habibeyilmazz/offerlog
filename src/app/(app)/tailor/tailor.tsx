@@ -67,11 +67,11 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
               ))}
             </select>
           )}
-          <textarea value={jd} onChange={(e) => setJd(e.target.value)} placeholder="Paste the job posting here" />
+          <textarea maxLength={30000} value={jd} onChange={(e) => setJd(e.target.value)} placeholder="Paste the job posting here" />
         </label>
         <label>
           Your resume
-          <textarea value={resume} onChange={(e) => updateResume(e.target.value)} placeholder="Paste your resume as plain text or Markdown" />
+          <textarea maxLength={30000} value={resume} onChange={(e) => updateResume(e.target.value)} placeholder="Paste your resume as plain text or Markdown" />
         </label>
       </div>
 
@@ -124,7 +124,7 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
             <input type="hidden" name="resume" value={resume} />
             <label>
               Bullets to rewrite, one per line
-              <textarea name="bullets" rows={5} required placeholder="- Built a course planner used by 300 students" />
+              <textarea name="bullets" rows={5} required maxLength={8000} placeholder="- Built a course planner used by 300 students" />
             </label>
             <p className="small muted">
               Sends the job description and these bullets to the Anthropic API. The model is told not to invent experience; check every line

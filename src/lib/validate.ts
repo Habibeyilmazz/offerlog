@@ -20,10 +20,15 @@ export type Result<T> = { ok: true; value: T } | { ok: false, error: string };
 
 type Raw = Record<string, unknown>;
 
+export class ValidationError extends Error {}
+
+/** Trimmed string field; throws ValidationError rather than silently cutting text that is too long. */
 export function str(raw: Raw, key: string, max = 200): string {
   const v = raw[key];
   if (v == null) return "";
-  return String(v).trim().slice(0, max);
+  const s = String(v).trim();
+  if (s.length > max) throw new ValidationError(`${key} is longer than ${max} characters.`);
+  return s;
 }
 
 function money(raw: Raw, key: string): number | null | "bad" {
@@ -47,6 +52,15 @@ export function safeUrl(s: string): boolean {
 }
 
 export function parseApplication(raw: Raw): Result<ApplicationInput> {
+  try {
+    return parseApplicationFields(raw);
+  } catch (e) {
+    if (e instanceof ValidationError) return { ok: false, error: e.message };
+    throw e;
+  }
+}
+
+function parseApplicationFields(raw: Raw): Result<ApplicationInput> {
   const company = str(raw, "company");
   const role = str(raw, "role");
   if (!company) return { ok: false, error: "Company is required." };

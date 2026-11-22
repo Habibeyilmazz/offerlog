@@ -70,8 +70,12 @@ function timestamp(v: unknown, fallback: string, what: string): string {
   return new Date(t).toISOString();
 }
 
-const asList = (v: unknown): Record<string, unknown>[] =>
-  Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null) : [];
+function asList(v: unknown, what: string): Record<string, unknown>[] {
+  if (v == null) return [];
+  if (!Array.isArray(v) || v.some((x) => typeof x !== "object" || x === null || Array.isArray(x)))
+    throw new Error(`${what} must be a list of objects.`);
+  return v;
+}
 
 function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, now: string): void {
   const parsed = parseApplication(raw);
@@ -83,20 +87,20 @@ function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, 
     .returning({ id: applications.id })
     .get();
 
-  const evs = asList(raw.events);
+  const evs = asList(raw.events, `${label} events`);
   if (evs.length === 0) evs.push({ fromStage: null, toStage: parsed.value.stage, at: createdAt });
   for (const e of evs) {
     if (!isStage(e.toStage)) throw new Error(`${label}: event has unknown stage "${String(e.toStage)}".`);
     const fromStage = isStage(e.fromStage) ? e.fromStage : null;
     tx.insert(events).values({ applicationId: id, fromStage, toStage: e.toStage, at: timestamp(e.at, createdAt, `${label} event`) }).run();
   }
-  for (const c of asList(raw.contacts)) {
+  for (const c of asList(raw.contacts, `${label} contacts`)) {
     const name = str(c, "name");
     if (!name) continue;
     const url = str(c, "url", 2000);
     tx.insert(contacts).values({ applicationId: id, name, title: str(c, "title"), email: str(c, "email"), url: safeUrl(url) ? url : "" }).run();
   }
-  for (const n of asList(raw.notes)) {
+  for (const n of asList(raw.notes, `${label} notes`)) {
     const body = str(n, "body", 20000);
     if (!body) continue;
     tx.insert(notes).values({ applicationId: id, body, stage: isStage(n.stage) ? n.stage : null, createdAt: timestamp(n.createdAt, now, `${label} note`) }).run();
@@ -108,8 +112,8 @@ export function importJson(d: Db, data: unknown, now = new Date().toISOString())
   if (typeof data !== "object" || data === null || (data as { app?: unknown }).app !== "offerlog")
     throw new Error("This is not an offerlog JSON export.");
   const doc = data as Record<string, unknown>;
-  const apps = asList(doc.applications);
-  const qs = asList(doc.questions);
+  const apps = asList(doc.applications, "applications");
+  const qs = asList(doc.questions, "questions");
   d.transaction((tx) => {
     apps.forEach((raw, i) => insertApplication(tx as unknown as Db, raw, `Application ${i + 1}`, now));
     qs.forEach((q, i) => {
