@@ -20,7 +20,9 @@ export function SubmitButton({ children, className = "btn", onClick, formAction,
     if (!failed || !form) return;
     for (const [name, typed] of failed) {
       const field = form.elements.namedItem(name);
-      if ((field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) && typeof typed === "string") field.value = typed;
+      // Checkboxes and radios carry their state in `checked`, not `value`; none of these forms has one yet.
+      const text = (field instanceof HTMLInputElement && field.type !== "checkbox" && field.type !== "radio") || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement;
+      if (text && typeof typed === "string") field.value = typed;
     }
   }, [failed]);
   const guarded =
