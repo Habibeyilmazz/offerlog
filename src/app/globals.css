@@ -202,6 +202,7 @@ main {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   border: 1px solid var(--ink);
   background: var(--ink);
@@ -396,6 +397,11 @@ textarea:hover {
 }
 
 /* ---------- board ---------- */
+
+.board-tools {
+  margin-bottom: 12px;
+  max-width: 320px;
+}
 
 .board {
   display: grid;

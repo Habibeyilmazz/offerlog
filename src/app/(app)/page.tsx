@@ -18,6 +18,7 @@ export default async function BoardPage() {
     stage: a.stage as Stage,
     salary: money(a.salaryMin, a.salaryMax, a.currency),
     where: place(a.location, a.workMode),
+    source: a.source,
     due: a.nextStepDue && a.nextStep ? due(a.nextStepDue, now) : null,
   }));
   const upNext = apps

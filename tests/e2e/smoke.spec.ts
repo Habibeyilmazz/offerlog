@@ -41,6 +41,11 @@ test("track an application end to end", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("region", { name: "Screening" })).toContainText("Acme Robotics");
   await expect(page.getByText("Email the recruiter")).toBeVisible();
+  const filter = page.getByPlaceholder(/Filter by company/);
+  await filter.fill("no such company");
+  await expect(page.locator(".card")).toHaveCount(0);
+  await filter.fill("referral");
+  await expect(page.locator(".card")).toHaveCount(1);
 
   // Keyword gap report
   await page.getByRole("link", { name: "Resume tailor" }).click();

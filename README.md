@@ -43,7 +43,7 @@ The database lives in the `offerlog-data` volume. No Node on the host? Run the s
 
 ## Features
 
-- **Board** with seven stages: wishlist, applied, screening, interview, offer, rejected, ghosted. Drag cards between columns, or use the stage menu on each card (works with keyboard and touch). An **Up next** strip lists next steps by due date and flags overdue ones.
+- **Board** with seven stages: wishlist, applied, screening, interview, offer, rejected, ghosted. Drag cards between columns, or use the stage menu on each card (works with keyboard and touch), and filter the board by company, role, place or source. An **Up next** strip lists next steps by due date and flags overdue ones.
 - **Applications** with company, role, posting link, salary range and currency, location and work mode (onsite, hybrid, remote), source, job description, and a next step with a due date.
 - **Timeline** per application: every stage change is recorded automatically, alongside your own dated notes. Marking a next step done logs it to the timeline.
 - **Contacts** per application (name, title, email, profile link).
@@ -81,7 +81,7 @@ The Playwright test uses Chromium; install it once with `npx playwright install 
 
 Not built yet:
 
-- Free-text search and filters on the board.
+- Saved filters and sorting options on the board (today: a quick text filter).
 - Calendar export (ICS) for next-step reminders and interviews.
 - Editing a saved contact or note in place (today: delete and re-add).
 - A user-editable keyword vocabulary for the resume tailor.

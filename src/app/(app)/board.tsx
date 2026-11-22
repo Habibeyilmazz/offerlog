@@ -13,6 +13,7 @@ export interface CardData {
   stage: Stage;
   salary: string;
   where: string;
+  source: string;
   due: { label: string; state: DueState } | null;
 }
 
@@ -23,6 +24,9 @@ export function Board({ cards }: { cards: CardData[] }) {
   const [pending, startTransition] = useTransition();
   const [movingId, setMovingId] = useState<number | null>(null);
   const [dropStage, setDropStage] = useState<Stage | null>(null);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = q ? optimistic.filter((c) => [c.company, c.role, c.where, c.source].some((f) => f.toLowerCase().includes(q))) : optimistic;
 
   function move(id: number, stage: Stage) {
     setMovingId(id);
@@ -34,9 +38,16 @@ export function Board({ cards }: { cards: CardData[] }) {
   }
 
   return (
+    <>
+    <div className="board-tools">
+      <label>
+        <span className="sr-only">Filter applications</span>
+        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by company, role, place or source" />
+      </label>
+    </div>
     <div className="board">
       {STAGES.map((stage) => {
-        const items = optimistic.filter((c) => c.stage === stage);
+        const items = visible.filter((c) => c.stage === stage);
         return (
           <section
             key={stage}
@@ -62,7 +73,7 @@ export function Board({ cards }: { cards: CardData[] }) {
               <span className="count">{items.length}</span>
             </div>
             {items.length === 0 ? (
-              <p className="empty">No applications</p>
+              <p className="empty">{q ? "No matches" : "No applications"}</p>
             ) : (
               <ol>
                 {items.map((c) => (
@@ -103,5 +114,6 @@ export function Board({ cards }: { cards: CardData[] }) {
         );
       })}
     </div>
+    </>
   );
 }

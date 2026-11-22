@@ -9,8 +9,10 @@ export default async function LoginPage() {
   return (
     <div className="login">
       <div className="panel">
-        <div className="brand" style={{ padding: 0 }}>
-          offer<span>log</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.png" alt="" width={40} height={40} style={{ borderRadius: 9 }} />
+          <h1 style={{ fontSize: "1.4rem" }}>offerlog</h1>
         </div>
         <p className="muted">Your job search, on your own machine.</p>
         <LoginForm />
