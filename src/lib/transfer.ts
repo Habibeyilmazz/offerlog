@@ -33,7 +33,8 @@ export function exportJson(d: Db) {
   const byApp = <T extends { applicationId: number }>(rows: T[]) => {
     const m = new Map<number, Omit<T, "applicationId" | "id">[]>();
     for (const { applicationId, id: _id, ...rest } of rows as (T & { id: number })[]) {
-      m.set(applicationId, [...(m.get(applicationId) ?? []), rest]);
+      if (m.has(applicationId)) m.get(applicationId)!.push(rest);
+      else m.set(applicationId, [rest]);
     }
     return m;
   };
