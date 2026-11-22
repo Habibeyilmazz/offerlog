@@ -808,3 +808,8 @@ th.num {
     transition: none !important;
   }
 }
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+}

@@ -5,8 +5,8 @@ services:
     ports:
       - "4220:4220"
     environment:
-      # Generate with: npm run hash-password (put the line in .env next to this file)
-      OFFERLOG_PASSWORD_HASH: ${OFFERLOG_PASSWORD_HASH:?Set OFFERLOG_PASSWORD_HASH in .env (npm run hash-password)}
+      # Generate with: node scripts/hash-password.ts >> .env
+      OFFERLOG_PASSWORD_HASH: ${OFFERLOG_PASSWORD_HASH:?Set OFFERLOG_PASSWORD_HASH in .env (node scripts/hash-password.ts)}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       TZ: ${TZ:-UTC}
     volumes:
