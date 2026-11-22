@@ -167,15 +167,50 @@ export function importJson(d: Db, data: unknown, now = new Date().toISOString())
   return { applications: apps.length, questions: qs.length };
 }
 
-/** Adds one application per CSV row. Columns are matched by header name (snake_case or camelCase). */
-export function importCsv(d: Db, text: string, now = new Date().toISOString()): ImportResult {
+// Column names and status words from people's own tracking spreadsheets, compared lower-cased with only letters and digits kept.
+const CSV_ALIASES: Record<string, string> = {
+  companyname: "company", employer: "company", organization: "company", organisation: "company",
+  position: "role", positiontitle: "role", jobtitle: "role", title: "role", job: "role",
+  status: "stage", applicationstatus: "stage",
+  link: "url", joblink: "url", joburl: "url", posting: "url", postingurl: "url", jobposting: "url",
+  city: "location",
+  worktype: "workMode", workplace: "workMode", workplacetype: "workMode", locationtype: "workMode", arrangement: "workMode",
+  foundvia: "source", foundon: "source", channel: "source", platform: "source",
+  nextaction: "nextStep", followup: "nextStep",
+  duedate: "nextStepDue", nextactiondate: "nextStepDue", followupdate: "nextStepDue",
+  date: "createdAt", dateapplied: "createdAt", applieddate: "createdAt", appliedon: "createdAt", applicationdate: "createdAt",
+  notes: "notes", note: "notes", comments: "notes",
+};
+const STAGE_WORDS: Record<string, string> = {
+  saved: "wishlist", bookmarked: "wishlist", interested: "wishlist", toapply: "wishlist", notapplied: "wishlist",
+  submitted: "applied", applicationsubmitted: "applied", applicationsent: "applied",
+  phonescreen: "screening", recruiterscreen: "screening", recruitercall: "screening", onlineassessment: "screening", assessment: "screening", oa: "screening",
+  interviewing: "interview", technicalinterview: "interview", finalround: "interview", onsite: "interview",
+  offered: "offer", offerreceived: "offer", accepted: "offer", offeraccepted: "offer",
+  rejection: "rejected", notselected: "rejected", unsuccessful: "rejected",
+  noresponse: "ghosted", noreply: "ghosted", noanswer: "ghosted",
+};
+const WORK_MODE_WORDS: Record<string, string> = {
+  onsite: "onsite", inoffice: "onsite", office: "onsite", inperson: "onsite", fullyremote: "remote", wfh: "remote",
+};
+const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/**
+ * Adds one application per CSV row. Columns are matched by header name: the export's own (snake_case or camelCase)
+ * or common spreadsheet names such as Position or Date applied. Unknown columns are returned in `ignored`.
+ */
+export function importCsv(d: Db, text: string, now = new Date().toISOString()): ImportResult & { ignored: string[] } {
   const [header, ...rows] = parseCsv(text);
   if (!header) throw new Error("The CSV file is empty.");
+  const seen = new Set<string>();
   const keys = header.map((h) => {
-    const norm = h.trim().toLowerCase().replace(/[\s-]/g, "_");
-    return CSV_COLUMNS.find(([col, key]) => col === norm || key.toLowerCase() === norm)?.[1];
+    const norm = squash(h);
+    const key = CSV_COLUMNS.find(([, k]) => k.toLowerCase() === norm)?.[1] ?? CSV_ALIASES[norm];
+    if (!key || seen.has(key)) return undefined;
+    seen.add(key);
+    return key;
   });
-  if (!keys.includes("company") || !keys.includes("role")) throw new Error("The CSV needs at least company and role columns.");
+  if (!seen.has("company") || !seen.has("role")) throw new Error("The CSV needs at least company and role columns.");
   checkCount(rows.length);
   d.transaction((tx) => {
     rows.forEach((cells, i) => {
@@ -184,8 +219,12 @@ export function importCsv(d: Db, text: string, now = new Date().toISOString()): 
         // Undo the spreadsheet formula guard added by exportCsv.
         if (k) raw[k] = (cells[j] ?? "").replace(/^'(?='*[=+\-@\t\r])/, "");
       });
-      insertApplication(tx as unknown as Db, raw, `Row ${i + 2}`, now);
+      raw.stage = STAGE_WORDS[squash(String(raw.stage ?? ""))] ?? raw.stage;
+      raw.workMode = WORK_MODE_WORDS[squash(String(raw.workMode ?? ""))] ?? raw.workMode;
+      // Dated with the row, so it does not count as news today and hide an old application from "waiting on a reply".
+      raw.notes = [{ body: raw.notes, createdAt: raw.createdAt }];
+      labelled(`Row ${i + 2}`, () => insertApplication(tx as unknown as Db, raw, `Row ${i + 2}`, now));
     });
   });
-  return { applications: rows.length, questions: 0 };
+  return { applications: rows.length, questions: 0, ignored: header.filter((h, j) => !keys[j] && h.trim()).map((h) => h.trim()) };
 }

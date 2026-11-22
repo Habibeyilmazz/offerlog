@@ -1,4 +1,4 @@
-import { isStage, WORK_MODES, type Stage, type WorkMode } from "./stages.ts";
+import { isStage, STAGES, WORK_MODES, type Stage, type WorkMode } from "./stages.ts";
 
 export interface ApplicationInput {
   company: string;
@@ -105,7 +105,7 @@ function parseApplicationFields(raw: Raw): Result<ApplicationInput> {
   if (!role) return { ok: false, error: "Role is required." };
 
   const stage = str(raw, "stage").toLowerCase() || "wishlist";
-  if (!isStage(stage)) return { ok: false, error: `Unknown stage "${str(raw, "stage")}".` };
+  if (!isStage(stage)) return { ok: false, error: `Unknown stage "${str(raw, "stage")}". Use one of: ${STAGES.join(", ")}.` };
 
   const url = str(raw, "url", 2000);
   if (!safeUrl(url)) return { ok: false, error: "Link must be an http(s) URL." };

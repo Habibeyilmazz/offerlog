@@ -192,7 +192,7 @@ describe("import/export", () => {
   it("round-trips CSV and creates an event per row", () => {
     seedDemo(d, new Date("2026-11-22T12:00:00Z"));
     const other = openDb(":memory:");
-    expect(importCsv(other, exportCsv(d)).applications).toBe(18);
+    expect(importCsv(other, exportCsv(d))).toEqual({ applications: 18, questions: 0, ignored: [] });
     expect(exportCsv(other)).toBe(exportCsv(d));
     expect(listEvents(other)).toHaveLength(18);
   });
@@ -219,6 +219,30 @@ describe("import/export", () => {
     const other = openDb(":memory:");
     importCsv(other, csv);
     expect(getApplication(other, 1)!.app).toMatchObject({ role: "'=SUM quoted", location: "'s-Hertogenbosch", nextStep: "'\t=call" });
+  });
+  it("imports a tracking spreadsheet with its own column names and status words", () => {
+    const sheet =
+      "Company Name,Position,Status,Date Applied,Job Link,Work Type,Found Via,Salary,Notes\n" +
+      "Fjordline,Junior Developer,Interviewing,10/14/2026,https://example.com/1,On-site,LinkedIn,40k-45k,Second round booked\n" +
+      "Pebble,Data Intern,No response,2026-09-20,,Fully remote,Handshake,,\n" +
+      "Saffron,Backend Dev,Online assessment,,,,,,\n";
+    expect(importCsv(d, sheet, "2026-11-22T12:00:00.000Z")).toEqual({ applications: 3, questions: 0, ignored: ["Salary"] });
+    const [a, b, c] = [1, 2, 3].map((id) => getApplication(d, id)!);
+    expect(a.app).toMatchObject({ company: "Fjordline", role: "Junior Developer", stage: "interview", url: "https://example.com/1", workMode: "onsite", source: "LinkedIn" });
+    expect(a.app.createdAt).toBe(new Date(2026, 9, 14).toISOString());
+    // The note is dated with the row, so an old application still shows as waiting on a reply.
+    expect(a.notes).toMatchObject([{ body: "Second round booked", stage: null, createdAt: new Date(2026, 9, 14).toISOString() }]);
+    expect(b.app).toMatchObject({ stage: "ghosted", workMode: "remote" });
+    expect(b.notes).toEqual([]);
+    expect(c.app.stage).toBe("screening");
+  });
+  it("lets the first of two columns for the same field win and lists the other as ignored", () => {
+    expect(importCsv(d, "Company,Employer,Role\nAcme,Other,Dev\n").ignored).toEqual(["Employer"]);
+    expect(getApplication(d, 1)!.app.company).toBe("Acme");
+  });
+  it("names the accepted stages when a status word is unknown", () => {
+    expect(() => importCsv(d, "company,role,status\nA,B,Withdrawn\n")).toThrow(/^Row 2: Unknown stage "Withdrawn"\. Use one of: wishlist, applied, .*ghosted\.$/);
+    expect(() => importCsv(d, `company,role,notes\nA,B,${"x".repeat(20001)}\n`)).toThrow(/^Row 2: body is longer than 20000/);
   });
   it("reads semicolon-separated CSV from spreadsheets set to a European locale", () => {
     expect(importCsv(d, "company;role;salary_min\r\nAcme, Inc.;Dev;50000\r\n").applications).toBe(1);

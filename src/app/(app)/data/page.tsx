@@ -41,7 +41,9 @@ export default async function DataPage() {
           <h2 id="import-h">Import</h2>
           <p className="muted" style={{ marginBottom: 14 }}>
             Adds records next to what you already have. A CSV needs <code>company</code> and <code>role</code> columns; the other columns
-            match the export. If any row is invalid, nothing is imported and the error names the row.
+            match the export. A tracking spreadsheet of your own works too: columns such as Position, Status, Date applied, Link and Notes,
+            and statuses such as Interviewing or No response, are understood, and any column left out is named after the import. If any
+            row is invalid, nothing is imported and the error names the row.
           </p>
           <ImportForm />
         </section>

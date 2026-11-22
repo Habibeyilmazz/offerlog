@@ -214,9 +214,10 @@ export async function importFile(_prev: FormState, form: FormData): Promise<Form
   const text = decodeText(new Uint8Array(await file.arrayBuffer()));
   try {
     const isJson = file.name.toLowerCase().endsWith(".json") || text.trimStart().startsWith("{");
-    const res = isJson ? importJson(db(), JSON.parse(text)) : importCsv(db(), text);
+    const res = isJson ? { ...importJson(db(), JSON.parse(text)), ignored: [] } : importCsv(db(), text);
     revalidatePath("/", "layout");
-    return { message: `Imported ${plural(res.applications, "application")}${res.questions ? ` and ${plural(res.questions, "question")}` : ""}.` };
+    const ignored = res.ignored.length ? ` Not imported: the ${res.ignored.map((h) => `"${h}"`).join(", ")} ${res.ignored.length > 1 ? "columns" : "column"}.` : "";
+    return { message: `Imported ${plural(res.applications, "application")}${res.questions ? ` and ${plural(res.questions, "question")}` : ""}.${ignored}` };
   } catch (e) {
     return { error: e instanceof SyntaxError ? "That JSON file could not be parsed." : (e as Error).message };
   }

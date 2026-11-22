@@ -238,8 +238,17 @@ test("track an application end to end", async ({ page }) => {
   });
   await page.getByRole("button", { name: "Import file" }).click();
   await expect(page.getByRole("status")).toHaveText("Imported 4 applications.");
+  // A tracking spreadsheet with its own column names and status words, and a column offerlog has no field for
+  await page.getByLabel("CSV or JSON file").setInputFiles({
+    name: "my-sheet.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("Company Name,Position,Status,Salary\nKestrel Works,Junior Developer,Saved,50k\n"),
+  });
+  await page.getByRole("button", { name: "Import file" }).click();
+  await expect(page.getByRole("status")).toHaveText('Imported 1 application. Not imported: the "Salary" column.');
   await page.getByRole("link", { name: "Board" }).first().click();
   await expect(page.getByRole("region", { name: "Applied" })).toContainText("Bramble Bank");
+  await expect(page.getByRole("region", { name: "Wishlist" })).toContainText("Kestrel Works");
 
   // Applications with no news for two weeks ask for a follow-up; one press puts it in Up next
   const waiting = page.getByRole("region", { name: "Waiting on a reply" });
