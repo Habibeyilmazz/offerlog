@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { moveApplication } from "@/app/actions.ts";
-import type { DueState } from "@/lib/format.ts";
+import { type DueState, matches } from "@/lib/format.ts";
 import { STAGE_LABELS, STAGES, type Stage } from "@/lib/stages.ts";
 
 export interface CardData {
@@ -33,8 +33,8 @@ export function Board({ cards }: { cards: CardData[] }) {
     if (refocus.current !== null && document.activeElement === document.body)
       document.querySelector<HTMLElement>(`[data-card="${refocus.current}"] select`)?.focus();
   }, [optimistic]);
-  const q = query.trim().toLowerCase();
-  const visible = q ? optimistic.filter((c) => [c.company, c.role, c.where, c.source].some((f) => f.toLowerCase().includes(q))) : optimistic;
+  const q = query.trim();
+  const visible = q ? optimistic.filter((c) => [c.company, c.role, c.where, c.source].some((f) => matches(f, q))) : optimistic;
 
   function move(id: number, stage: Stage) {
     setMovingId(id);

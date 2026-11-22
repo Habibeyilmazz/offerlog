@@ -44,3 +44,8 @@ export function plural(n: number, word: string, withCount = true): string {
   const w = n === 1 ? word : `${word}s`;
   return withCount ? `${n} ${w}` : w;
 }
+
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+/** Filter match ignoring case and accents: "zurich" finds "Zürich", "istanbul" finds "İstanbul". */
+export const matches = (text: string, query: string) => fold(text).includes(fold(query.trim()));

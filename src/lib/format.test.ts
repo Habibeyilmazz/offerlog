@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { due, money, onDay, place, plural, today } from "./format.ts";
+import { due, matches, money, onDay, place, plural, today } from "./format.ts";
 
 describe("format", () => {
   it("formats salary ranges compactly", () => {
     expect(money(38000, 46000, "EUR")).toBe("€38K–€46K");
     expect(money(null, 90000, "USD")).toBe("$90K");
     expect(money(null, null, "USD")).toBe("");
+  });
+  it("filters without caring about case or accents", () => {
+    // Lower-casing alone turns "İstanbul" into "i̇stanbul", which "istanbul" does not find.
+    expect(matches("İstanbul", "istanbul")).toBe(true);
+    expect(matches("Zürich, hybrid", " ZURICH ")).toBe(true);
+    expect(matches("Société Générale", "societe")).toBe(true);
+    expect(matches("Acme", "acne")).toBe(false);
   });
   it("pluralises counts", () => {
     expect(plural(1, "application")).toBe("1 application");
