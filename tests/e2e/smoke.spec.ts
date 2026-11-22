@@ -76,6 +76,14 @@ test("track an application end to end", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("region", { name: "Interview" })).toContainText("Acme Robotics");
 
+  // A move that cannot reach the server keeps the board, puts the card back and says so
+  await page.context().setOffline(true);
+  await page.getByLabel("Move Acme Robotics to stage").selectOption("rejected");
+  await expect(page.getByRole("alert").filter({ hasText: "Could not move Acme Robotics to Rejected" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Interview" })).toContainText("Acme Robotics");
+  await expect(page.getByLabel("Move Acme Robotics to stage")).toHaveValue("interview");
+  await page.context().setOffline(false);
+
   const filter = page.getByPlaceholder(/Filter by company/);
   await filter.fill("no such company");
   await expect(page.locator(".card")).toHaveCount(0);

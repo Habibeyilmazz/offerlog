@@ -25,14 +25,22 @@ export function Board({ cards }: { cards: CardData[] }) {
   const [movingId, setMovingId] = useState<number | null>(null);
   const [dropStage, setDropStage] = useState<Stage | null>(null);
   const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
   const q = query.trim().toLowerCase();
   const visible = q ? optimistic.filter((c) => [c.company, c.role, c.where, c.source].some((f) => f.toLowerCase().includes(q))) : optimistic;
 
   function move(id: number, stage: Stage) {
     setMovingId(id);
+    setError("");
     startTransition(async () => {
       setOptimistic({ id, stage });
-      await moveApplication(id, stage);
+      try {
+        await moveApplication(id, stage);
+      } catch {
+        // Offline or a server error: the optimistic move is undone when the transition ends; keep the board and say why.
+        const company = cards.find((c) => c.id === id)?.company ?? "the application";
+        setError(`Could not move ${company} to ${STAGE_LABELS[stage]}. Check your connection and try again.`);
+      }
       setMovingId(null);
     });
   }
@@ -46,6 +54,11 @@ export function Board({ cards }: { cards: CardData[] }) {
           <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by company, role, place or source" />
         </label>
       </div>
+    )}
+    {error && (
+      <p className="error" role="alert">
+        {error}
+      </p>
     )}
     <div className="board">
       {STAGES.map((stage) => {
