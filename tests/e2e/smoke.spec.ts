@@ -74,8 +74,10 @@ test("track an application end to end", async ({ page }) => {
   await page.getByPlaceholder(/Add a dated note/).fill("Recruiter call went well");
   // Offline, the note stays in the box instead of being lost
   await page.context().setOffline(true);
-  await page.getByRole("button", { name: "Add note" }).click();
+  await page.getByRole("button", { name: "Add note" }).press("Enter");
   await expect(page.getByRole("alert").filter({ hasText: "the connection dropped" })).toBeVisible();
+  // The button is not disabled while sending, which would have dropped keyboard focus to the top of the page
+  await expect(page.getByRole("button", { name: "Add note" })).toBeFocused();
   await expect(page.getByPlaceholder(/Add a dated note/)).toHaveValue("Recruiter call went well");
   await page.context().setOffline(false);
   await page.getByRole("button", { name: "Add note" }).click();
@@ -88,8 +90,10 @@ test("track an application end to end", async ({ page }) => {
   // Edit the note and a contact in place
   await page.locator(".timeline").getByText("Edit note").click();
   await page.getByLabel("Text of the note").fill("Recruiter call went well, panel next week");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).press("Enter");
   await expect(page.locator(".timeline .note-text")).toHaveText("Recruiter call went well, panel next week");
+  // The saved panel is re-rendered closed; keyboard focus goes to its section's heading, not the top of the page
+  await expect(page.getByRole("heading", { name: "Timeline" })).toBeFocused();
   await expect(page.locator(".timeline details.edit[open]")).toHaveCount(0);
   await page.getByLabel("Name").fill("Dana Reyes");
   // The browser accepts any scheme in type=url; the server must say why it refused, and keep the typed values.

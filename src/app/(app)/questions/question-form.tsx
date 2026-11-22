@@ -3,10 +3,11 @@
 import { saveQuestion } from "@/app/actions.ts";
 import type { Question } from "@/db/schema.ts";
 import { PREP_STAGES, QUESTION_CATEGORIES, STAGE_LABELS } from "@/lib/stages.ts";
+import { SubmitButton } from "../submit-button.tsx";
 import { useFormAction } from "../use-form-action.ts";
 
 export function QuestionForm({ q }: { q?: Question }) {
-  const { state, action, pending, value, key } = useFormAction(saveQuestion);
+  const { state, action, value, key } = useFormAction(saveQuestion);
   return (
     <form key={key} action={action}>
       {q && <input type="hidden" name="id" value={q.id} />}
@@ -41,9 +42,7 @@ export function QuestionForm({ q }: { q?: Question }) {
         </label>
       </div>
       <div className="form-actions">
-        <button className="btn" disabled={pending}>
-          {q ? "Save question" : "Add question"}
-        </button>
+        <SubmitButton>{q ? "Save question" : "Add question"}</SubmitButton>
         {state.error && (
           <span className="error" role="alert">
             {state.error}

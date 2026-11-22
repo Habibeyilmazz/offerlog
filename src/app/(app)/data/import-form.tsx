@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { importFile } from "@/app/actions.ts";
+import { SubmitButton } from "../submit-button.tsx";
 
 export function ImportForm() {
   const [state, action, pending] = useActionState(importFile, {});
@@ -12,9 +13,7 @@ export function ImportForm() {
         <input type="file" name="file" accept=".csv,.json,text/csv,application/json" required />
       </label>
       <div className="form-actions" style={{ marginTop: 0 }}>
-        <button className="btn" disabled={pending}>
-          {pending ? "Importing…" : "Import file"}
-        </button>
+        <SubmitButton>{pending ? "Importing…" : "Import file"}</SubmitButton>
         {state.error && (
           <span className="error" role="alert">
             {state.error}

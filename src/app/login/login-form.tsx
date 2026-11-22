@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { SubmitButton } from "@/app/(app)/submit-button.tsx";
 import { login } from "./actions.ts";
 
 export function LoginForm() {
@@ -16,9 +17,7 @@ export function LoginForm() {
           {state.error}
         </p>
       )}
-      <button className="btn" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
-      </button>
+      <SubmitButton>{pending ? "Signing in…" : "Sign in"}</SubmitButton>
     </form>
   );
 }

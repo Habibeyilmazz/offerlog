@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { aiRewrite, jobDescription } from "@/app/actions.ts";
 import { gapReport, type TermHit } from "@/lib/keywords.ts";
+import { SubmitButton } from "../submit-button.tsx";
 import { useFormAction } from "../use-form-action.ts";
 
 interface Job {
@@ -150,9 +151,7 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: { id
               before you use it.
             </p>
             <div>
-              <button className="btn" disabled={pending || !jd.trim()}>
-                {pending ? "Rewriting…" : "Rewrite with Claude"}
-              </button>
+              <SubmitButton disabled={!jd.trim()}>{pending ? "Rewriting…" : "Rewrite with Claude"}</SubmitButton>
             </div>
             {state.error && (
               <p className="error" role="alert">

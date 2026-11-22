@@ -3,10 +3,11 @@
 import { saveApplication } from "@/app/actions.ts";
 import type { Application } from "@/db/schema.ts";
 import { STAGE_LABELS, STAGES, WORK_MODES } from "@/lib/stages.ts";
+import { SubmitButton } from "./submit-button.tsx";
 import { useFormAction } from "./use-form-action.ts";
 
 export function ApplicationForm({ app }: { app?: Application }) {
-  const { state, action, pending, value, key } = useFormAction(saveApplication);
+  const { state, action, value, key } = useFormAction(saveApplication);
   return (
     <form key={key} action={action}>
       {app && <input type="hidden" name="id" value={app.id} />}
@@ -98,9 +99,7 @@ export function ApplicationForm({ app }: { app?: Application }) {
         </p>
       )}
       <div className="form-actions">
-        <button className="btn" disabled={pending}>
-          {app ? "Save changes" : "Add application"}
-        </button>
+        <SubmitButton>{app ? "Save changes" : "Add application"}</SubmitButton>
       </div>
     </form>
   );
