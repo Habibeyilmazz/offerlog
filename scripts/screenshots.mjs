@@ -23,7 +23,7 @@ const page = await signedIn({ viewport: { width: 1440, height: 900 } });
 const shots = [
   ["board", "/"],
   ["application", null],
-  ["tailor", "/tailor?app=1"],
+  ["tailor", "/tailor"],
   ["analytics", "/analytics"],
   ["questions", "/questions"],
   ["data", "/data"],
@@ -31,7 +31,11 @@ const shots = [
 for (const [name, path] of shots) {
   if (path) await page.goto(base + path);
   else await openApplication(page);
-  if (name === "tailor") await page.getByLabel("Your resume").fill("Computer science student. Built a course planner in React.js and Python with a Postgres database. Wrote unit tests with Jest. Used Git and GitHub daily.");
+  if (name === "tailor") {
+    // Picked by name, not ?app=1: ids keep counting up when the demo data is reseeded.
+    await page.getByLabel("Load a job description from an application").selectOption({ label: "Tidepool Labs, Junior Frontend Engineer" });
+    await page.getByLabel("Your resume").fill("Computer science student. Built a course planner in React.js and Python with a Postgres database. Wrote unit tests with Jest. Used Git and GitHub daily.");
+  }
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${out}/${name}.png`, fullPage: name !== "board" });
 }

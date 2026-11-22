@@ -17,6 +17,8 @@ Latest, design and UX pass: every page was checked in real screenshots at 1440px
 ### Fixed
 
 - On phones the board showed seven 158px slivers; columns now take 78% of the width and snap one at a time.
+- On phones, short pages (such as not-found) split the spare height between header and content, so the nav bar ballooned to about 360px.
+- `scripts/screenshots.mjs` loaded the tailor with `?app=1`, which is empty after a reseed; it now picks the job by name.
 - Funnel counts were white on the bar colour, which failed contrast on amber. They now sit beside the bar.
 - Tabular figures split "6.5 d" into "6 . 5 d" in this typeface; they are now only used for bare integers.
 - "1 offers" and "Imported 1 applications." are pluralised correctly.
