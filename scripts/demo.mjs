@@ -1,6 +1,6 @@
 // Records the README demo GIF from a running instance freshly seeded with `npm run db:seed`:
 //   node scripts/demo.mjs <baseUrl> <password> <out.gif>
-// It moves one demo card to Screening, so reseed afterwards. Needs ffmpeg on PATH.
+// It moves one demo card to Screening, so reseed afterwards (`npm run db:seed -- --force`). Needs ffmpeg on PATH.
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";

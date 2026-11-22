@@ -9,7 +9,7 @@ Node.js 22.18 or newer.
 ```sh
 npm ci --ignore-scripts
 node scripts/hash-password.ts >> .env.local
-npm run db:seed        # fictional demo data
+npm run db:seed        # fictional demo data (add -- --force to replace existing data)
 npm run dev            # http://localhost:4220
 ```
 
@@ -35,7 +35,7 @@ CI runs the same steps, plus `npm audit --omit=dev --audit-level=moderate` and a
 
 ## Screenshots and the demo GIF
 
-From a running instance seeded with `npm run db:seed`:
+From a running instance seeded with `npm run db:seed` (`-- --force` to reseed):
 
 ```sh
 node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots

@@ -1,3 +1,7 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../db/index.ts";
 import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, saveQuestion, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote, removeEvent, setEventDate } from "./data.ts";
@@ -64,6 +68,24 @@ describe("applications", () => {
     const other = openDb(":memory:");
     createApplication(other, input({ company: "A", role: "B" }));
     expect(isEmptyTracker(other)).toBe(false);
+  });
+  it("seed script: refuses to replace a tracker that has data unless --force", () => {
+    // `npm run db:seed` uses the same data/offerlog.db as `npm start`, and wiped a real search without asking.
+    const dir = mkdtempSync(path.join(tmpdir(), "offerlog-seed-"));
+    const file = path.join(dir, "t.db");
+    const seed = (...args: string[]) => spawnSync(process.execPath, ["scripts/seed.ts", ...args], { env: { ...process.env, OFFERLOG_DB: file }, encoding: "utf8" });
+    try {
+      const mine = openDb(file);
+      createApplication(mine, input({ company: "My Real Co", role: "Dev" }));
+      const refused = seed();
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain("--force");
+      expect(listApplications(mine).some((a) => a.company === "My Real Co")).toBe(true);
+      expect(seed("--force").status).toBe(0);
+      expect(listApplications(mine).some((a) => a.company === "My Real Co")).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
   it("dates demo next steps in local time", () => {
     const now = new Date(2026, 10, 22, 8); // 08:00 in Auckland is the previous day in UTC

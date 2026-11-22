@@ -21,7 +21,7 @@ npm run build
 npm start                                     # http://localhost:4220
 ```
 
-Sign in with the password you chose. `npm start` listens on `127.0.0.1` only, because the app speaks plain HTTP; `npm start -- -H 0.0.0.0` opens it to your network, but a TLS reverse proxy is the safer way (see Docker below). On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it is only offered while there are no applications and no questions, because it replaces both). `npm run db:seed` does the same from the command line and replaces everything.
+Sign in with the password you chose. `npm start` listens on `127.0.0.1` only, because the app speaks plain HTTP; `npm start -- -H 0.0.0.0` opens it to your network, but a TLS reverse proxy is the safer way (see Docker below). On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it is only offered while there are no applications and no questions, because it replaces both). `npm run db:seed` does the same from the command line; on a tracker that already has data it stops, and `npm run db:seed -- --force` replaces everything.
 
 ### Docker
 
@@ -92,7 +92,7 @@ npm run db:generate  # after changing src/db/schema.ts
 
 The Playwright test uses Chromium; install it once with `npx playwright install chromium`.
 
-README screenshots and the demo GIF come from a running instance seeded with `npm run db:seed`: `node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots` and `node scripts/demo.mjs http://localhost:4220 <password> docs/demo.gif` (needs ffmpeg; it moves one demo card, so reseed afterwards).
+README screenshots and the demo GIF come from a running instance seeded with `npm run db:seed`: `node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots` and `node scripts/demo.mjs http://localhost:4220 <password> docs/demo.gif` (needs ffmpeg; it moves one demo card, so reseed afterwards with `npm run db:seed -- --force`).
 
 ## Compared with other options
 
