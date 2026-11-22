@@ -63,10 +63,15 @@ export interface ImportResult {
   questions: number;
 }
 
-function timestamp(v: unknown, fallback: string, what: string): string {
+/** An ISO timestamp from any date Date.parse reads, if it names a four-digit year and is not later than a day after `now`. */
+function timestamp(v: unknown, fallback: string, what: string, now: string): string {
   if (v == null || v === "") return fallback;
   const t = Date.parse(String(v));
-  if (Number.isNaN(t)) throw new Error(`${what}: "${String(v)}" is not a valid date.`);
+  // Date.parse turns "5" into 2001 and a spreadsheet serial like "45000" into the year 45000.
+  if (Number.isNaN(t) || !/\d{4}/.test(String(v)) || !/^\d{4}-/.test(new Date(t).toISOString()))
+    throw new Error(`${what}: "${String(v)}" is not a valid date.`);
+  // A day of slack for a backup made on a machine whose clock runs ahead.
+  if (t > Date.parse(now) + 86_400_000) throw new Error(`${what}: "${String(v)}" is in the future.`);
   return new Date(t).toISOString();
 }
 
@@ -90,16 +95,16 @@ function labelled(label: string, f: () => void): void {
 function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, now: string): void {
   const parsed = parseApplication(raw);
   if (!parsed.ok) throw new Error(`${label}: ${parsed.error}`);
-  const createdAt = timestamp(raw.createdAt, now, `${label} createdAt`);
+  const createdAt = timestamp(raw.createdAt, now, `${label} createdAt`, now);
   const { id } = tx
     .insert(applications)
-    .values({ ...parsed.value, createdAt, updatedAt: timestamp(raw.updatedAt, createdAt, `${label} updatedAt`) })
+    .values({ ...parsed.value, createdAt, updatedAt: timestamp(raw.updatedAt, createdAt, `${label} updatedAt`, now) })
     .returning({ id: applications.id })
     .get();
 
   const evs = asList(raw.events, `${label} events`).map((e) => {
     if (!isStage(e.toStage)) throw new Error(`${label}: event has unknown stage "${String(e.toStage)}".`);
-    return { applicationId: id, fromStage: isStage(e.fromStage) ? e.fromStage : null, toStage: e.toStage, at: timestamp(e.at, createdAt, `${label} event`) };
+    return { applicationId: id, fromStage: isStage(e.fromStage) ? e.fromStage : null, toStage: e.toStage, at: timestamp(e.at, createdAt, `${label} event`, now) };
   });
   if (evs.length === 0) evs.push({ applicationId: id, fromStage: null, toStage: parsed.value.stage, at: createdAt });
   // The board shows the stage, the timeline and analytics the events; they must agree. Ties go to the later entry, like (at, id).
@@ -116,7 +121,7 @@ function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, 
   for (const n of asList(raw.notes, `${label} notes`)) {
     const body = str(n, "body", 20000);
     if (!body) continue;
-    tx.insert(notes).values({ applicationId: id, body, stage: isStage(n.stage) ? n.stage : null, createdAt: timestamp(n.createdAt, now, `${label} note`) }).run();
+    tx.insert(notes).values({ applicationId: id, body, stage: isStage(n.stage) ? n.stage : null, createdAt: timestamp(n.createdAt, now, `${label} note`, now) }).run();
   }
 }
 
@@ -135,7 +140,7 @@ export function importJson(d: Db, data: unknown, now = new Date().toISOString())
       const stage = str(q, "stage");
       if (!question || !(QUESTION_CATEGORIES as readonly string[]).includes(category) || !isStage(stage))
         throw new Error(`Question ${i + 1}: needs text, a known category and stage.`);
-      tx.insert(questions).values({ question, category, stage, answer: str(q, "answer", 20000), createdAt: timestamp(q.createdAt, now, `Question ${i + 1}`) }).run();
+      tx.insert(questions).values({ question, category, stage, answer: str(q, "answer", 20000), createdAt: timestamp(q.createdAt, now, `Question ${i + 1}`, now) }).run();
     }));
     const goal = Number((doc.settings as { weeklyGoal?: unknown } | undefined)?.weeklyGoal);
     if (Number.isInteger(goal) && goal > 0 && goal <= 100) setWeeklyGoal(tx as unknown as Db, goal);

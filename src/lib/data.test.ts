@@ -179,6 +179,15 @@ describe("import/export", () => {
     const reordered = { ...app, events: [{ fromStage: "applied", toStage: "offer", at: "2026-02-01T09:00:00Z" }, ...app.events] };
     expect(importJson(d, { app: "offerlog", applications: [reordered] }).applications).toBe(1);
   });
+  it("refuses dates that are not real calendar times", () => {
+    const now = "2026-11-22T00:00:00.000Z";
+    const row = (createdAt: string) => `company,role,created_at\nA,B,${createdAt}\n`;
+    expect(() => importCsv(d, row("5"), now)).toThrow(/Row 2 createdAt: "5" is not a valid date/); // Date.parse reads this as 2001
+    expect(() => importCsv(d, row("45000"), now)).toThrow(/not a valid date/); // a spreadsheet serial number, read as year 45000
+    expect(() => importCsv(d, row("2027-01-01"), now)).toThrow(/Row 2 createdAt: "2027-01-01" is in the future/);
+    expect(importCsv(d, row("11/20/2026 9:30"), now).applications).toBe(1); // what a spreadsheet writes back is still fine
+    expect(importCsv(d, row("2026-11-22T20:00:00Z"), now).applications).toBe(1); // a clock a few hours ahead is tolerated
+  });
   it("writes nothing when any row is invalid", () => {
     expect(() => importCsv(d, "company,role,stage\nA,B,applied\nC,D,hired\n")).toThrow(/Row 3/);
     expect(exportJson(d).applications).toEqual([]);
