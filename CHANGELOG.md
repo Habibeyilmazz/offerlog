@@ -4,7 +4,44 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, feature round: correcting stage history. Using the app as a newcomer showed two ways the analytics went wrong with no fix in the UI: a card moved to the wrong column and back (Applied, Offer, Applied) counted as an offer in the funnel for good, and every application entered after the fact was dated today, so the weekly chart and time to reply were wrong from day one.
+Latest, reliability round: the app was pushed with odd, empty, huge, non-English and malformed input, dropped connections and long names, in a real browser and against `src/lib`. Each bug below was reproduced first, got a failing test (vitest or the Playwright smoke test), then the fix.
+
+### Fixed
+
+- A server-side validation error on the add/edit application form ("Minimum salary is above the maximum", a future date) wiped every field, including a pasted job description: React resets a form after its action. The application, question, contact, stage-date and note forms now share `useFormAction` (`src/app/(app)/use-form-action.ts`), which refills the form with what was submitted, and remounts it with `key` so selects do not snap back to their first option.
+- A dropped connection while saving any of those forms, or while adding a note, replaced the page with the error screen and lost the typed text. The form now stays, keeps the text and says the connection dropped or the server failed. Notes go through a new client `NoteForm`; `addNote`/`updateNote` return a form state.
+- Moving a card on the board while offline (or on a server error) replaced the whole board with the error screen. The board now stays, the card goes back to its column and an alert names the move that failed. Signing out in another tab still redirects to the sign-in page.
+- A long unbroken company name or location stretched its board card under the neighbouring columns (the card link could not be clicked) and made the application page scroll sideways.
+- The tailor's "repeated words" list split non-ASCII words: "développeur" came out as "veloppeur". Words are now matched in any script.
+- Import: a semicolon-separated CSV (what spreadsheets set to a European locale save) was refused with "needs company and role columns"; the separator is now detected from the header line.
+- Import: CSV round trips dropped a leading apostrophe from text such as `'=x`, because the formula guard and the import's stripping did not account for one. "'s-Hertogenbosch" still exports unchanged.
+- Import: dates Date.parse reads leniently were stored as nonsense, such as "5" as 2001, a spreadsheet serial "45000" as the year 45000, and "2026-02-30", "02/30/2026" or "2026/02/30" as March 2. Dates now need a four-digit year, at most 9999, a real calendar day, and may not be more than a day in the future.
+- Import: the semicolon detection also handles a blank first line and quoted commas in the header; a leading apostrophe before a tab round-trips; a resume word typed with a combining accent matches the precomposed one in the tailor.
+- Import: an application whose `stage` disagrees with its last stage change (board says Offer, timeline says Applied) was accepted; it is now refused with the record named.
+- Import: an object or list where text was expected was saved as "[object Object]"; `str` in `src/lib/validate.ts` now refuses it. Errors from a contact, note or question inside a JSON file now name the record ("Application 3: name is longer than 200 characters.").
+- The error screen said every failure happened "on the server"; it now mentions a dropped connection too.
+
+### Checked by review
+
+- A Codex review of this round found the Feb 30 / slash-date rollover, the semicolon and apostrophe corner cases and the combining accent above, plus one regression made earlier in this round (stage changes were inserted in a single statement, so an application with about 9,000 of them hit SQLite's variable limit); all fixed with tests.
+- The unit suite also passes with `TZ` set to America/Los_Angeles, UTC and Asia/Kolkata (it normally runs in Pacific/Auckland).
+
+### Added
+
+- Smoke test: the question bank (adding a question clears the form and shows it as interview prep), the offline cases above, a refused save keeping its fields, and a long-name import.
+
+### Checked, nothing to change
+
+- `gapReport` on 30,000-character inputs (the textarea limit) of repetitive or pathological text runs in under 10 ms; no regex backtracking problem.
+- Odd URLs (`/applications/abc`, `-1`, `1.5`, huge numbers) return 404; empty, blank-line-only, binary, UTF-16 and deeply nested JSON files are refused with a message, never a crash.
+- `onDay` across the Pacific/Auckland DST changes keeps the chosen calendar day.
+
+### Notes for the next agent
+
+- Any new form whose server action returns `FormState` should use `useFormAction` and give the `<form>` `key={key}` and its fields `defaultValue={value("name", saved)}`. Plain `<form action={serverAction}>` is fine only for button-only forms (delete, mark done), where nothing typed can be lost.
+- Still open from earlier rounds, outside this round's scope: the AI rewrite is only tested with a mocked client (no key available), no manual theme switch, no `script-src` CSP, 4 dev-only drizzle-kit advisories.
+
+Earlier, feature round: correcting stage history. Using the app as a newcomer showed two ways the analytics went wrong with no fix in the UI: a card moved to the wrong column and back (Applied, Offer, Applied) counted as an offer in the funnel for good, and every application entered after the fact was dated today, so the weekly chart and time to reply were wrong from day one.
 
 ### Added
 
