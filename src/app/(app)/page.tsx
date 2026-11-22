@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { loadDemoData } from "@/app/actions.ts";
+import { loadDemoData, moveApplication, scheduleFollowUp } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
-import { listApplications } from "@/lib/data.ts";
+import { lastActivity, listApplications } from "@/lib/data.ts";
+import { FOLLOW_UP_DAYS, waitingOnReply } from "@/lib/followup.ts";
 import { due, money, place, plural, today } from "@/lib/format.ts";
 import { isEmptyTracker } from "@/lib/seed.ts";
 import { requireUser } from "@/lib/session.ts";
-import { STAGES, type Stage } from "@/lib/stages.ts";
+import { STAGE_LABELS, STAGES, type Stage } from "@/lib/stages.ts";
 import { Board, type CardData } from "./board.tsx";
 import { SubmitButton } from "./submit-button.tsx";
 
@@ -30,6 +31,8 @@ export default async function BoardPage() {
     .filter((a) => a.nextStep && a.nextStepDue && STAGES.indexOf(a.stage as Stage) < STAGES.indexOf("rejected"))
     .sort((a, b) => (a.nextStepDue as string).localeCompare(b.nextStepDue as string))
     .slice(0, 8);
+  const waiting = waitingOnReply(apps, lastActivity(db()), now);
+  const shown = waiting.slice(0, 8);
   const active = apps.filter((a) => !["wishlist", "rejected", "ghosted"].includes(a.stage)).length;
 
   return (
@@ -88,6 +91,36 @@ export default async function BoardPage() {
               );
             })}
           </div>
+        </section>
+      )}
+
+      {waiting.length > 0 && (
+        <section aria-labelledby="waiting-h">
+          <h2 id="waiting-h">Waiting on a reply</h2>
+          <p className="muted section-lede">
+            No news for {FOLLOW_UP_DAYS} days or more. Plan a follow-up for today, or mark it ghosted.
+            {waiting.length > shown.length && ` Showing the ${shown.length} longest waits of ${waiting.length}.`}
+          </p>
+          <ul className="upnext">
+            {shown.map(({ app: a, days }) => (
+              <li key={a.id}>
+                <Link href={`/applications/${a.id}`}>
+                  <strong>{a.company}</strong>
+                </Link>
+                <span className="what">
+                  {STAGE_LABELS[a.stage as Stage]}, no news for {days} days
+                </span>
+                <form>
+                  <SubmitButton className="btn secondary" formAction={scheduleFollowUp.bind(null, a.id)} aria-label={`Follow up with ${a.company}`}>
+                    Follow up
+                  </SubmitButton>
+                  <SubmitButton className="btn secondary" formAction={moveApplication.bind(null, a.id, "ghosted")} aria-label={`Mark ghosted, ${a.company}`}>
+                    Mark ghosted
+                  </SubmitButton>
+                </form>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

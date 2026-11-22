@@ -224,12 +224,22 @@ test("track an application end to end", async ({ page }) => {
   await page.getByLabel("CSV or JSON file").setInputFiles({
     name: "apps.csv",
     mimeType: "text/csv",
-    buffer: Buffer.from(`company,role,stage\nBramble Bank,Graduate Engineer,applied\n${"Unbrokenname".repeat(12)},Dev,wishlist\n`),
+    buffer: Buffer.from(
+      `company,role,stage,created_at\nBramble Bank,Graduate Engineer,applied,\n${"Unbrokenname".repeat(12)},Dev,wishlist,\n` +
+        "Old Mill Labs,Tester,applied,2025-01-10\nQuarry Systems,Developer,screening,2025-02-01\n",
+    ),
   });
   await page.getByRole("button", { name: "Import file" }).click();
-  await expect(page.getByRole("status")).toHaveText("Imported 2 applications.");
+  await expect(page.getByRole("status")).toHaveText("Imported 4 applications.");
   await page.getByRole("link", { name: "Board" }).first().click();
   await expect(page.getByRole("region", { name: "Applied" })).toContainText("Bramble Bank");
+
+  // Applications with no news for two weeks ask for a follow-up; one press puts it in Up next
+  const waiting = page.getByRole("region", { name: "Waiting on a reply" });
+  await expect(waiting.getByRole("listitem")).toHaveText([/Old Mill Labs.*Applied, no news/, /Quarry Systems.*Screening, no news/]);
+  await waiting.getByRole("button", { name: "Follow up with Old Mill Labs" }).click();
+  await expect(page.getByRole("region", { name: "Up next" })).toContainText(/Old Mill Labs\s*Due today\s*Send a follow-up/);
+  await expect(waiting.getByRole("listitem")).toHaveCount(1);
   // A long unbroken name wraps inside its card instead of sliding under the other columns
   await page.getByRole("link", { name: /^Unbrokenname/ }).click({ timeout: 5_000 });
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Unbrokenname");
@@ -252,6 +262,10 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing here" })).toBeVisible();
   await page.getByRole("link", { name: "Back to the board" }).click();
   await expect(page.getByRole("heading", { name: "Board", level: 1 })).toBeVisible();
+  // ...or marked ghosted, which empties the waiting list
+  await page.getByRole("button", { name: "Mark ghosted, Quarry Systems" }).click();
+  await expect(page.getByRole("region", { name: "Ghosted" })).toContainText("Quarry Systems");
+  await expect(page.getByRole("region", { name: "Waiting on a reply" })).toHaveCount(0);
 
   // Sign out ends the session (offline it says so and stays put)
   await page.context().setOffline(true);

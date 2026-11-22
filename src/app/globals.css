@@ -563,7 +563,8 @@ textarea:hover {
   padding-bottom: 6px;
   margin-bottom: 22px;
 }
-.upnext a {
+.upnext > a,
+.upnext > li {
   flex: 0 0 auto;
   max-width: 280px;
   display: grid;
@@ -577,6 +578,30 @@ textarea:hover {
 }
 .upnext a.overdue {
   border-left-color: var(--danger);
+}
+/* "Waiting on a reply": the same cards as a list, with a quiet edge and two buttons. */
+ul.upnext {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0 0 6px;
+}
+.upnext > li {
+  border-left-color: var(--muted);
+}
+.upnext li form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.upnext li .btn {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+.section-lede {
+  margin: 4px 0 10px;
+  font-size: 0.9rem;
+  max-width: 75ch;
 }
 .upnext strong {
   font-size: 0.9rem;

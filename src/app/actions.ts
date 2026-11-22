@@ -73,6 +73,15 @@ export async function completeNextStep(form: FormData) {
   revalidatePath("/", "layout");
 }
 
+/** From "Waiting on a reply": a follow-up due today, which moves the application to Up next. Keeps an existing step's text. */
+export async function scheduleFollowUp(appId: number) {
+  await requireUser();
+  const detail = data.getApplication(db(), id(appId));
+  if (!detail) return;
+  data.updateApplication(db(), detail.app.id, { nextStep: detail.app.nextStep || "Send a follow-up", nextStepDue: today() });
+  revalidatePath("/", "layout");
+}
+
 export async function updateEventDate(_prev: FormState, form: FormData): Promise<FormState> {
   await requireUser();
   const raw = fields(form);
