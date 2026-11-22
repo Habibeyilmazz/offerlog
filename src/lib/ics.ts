@@ -51,7 +51,8 @@ export function nextStepsIcs(apps: Item[], now = new Date()): string {
       `DTEND;VALUE=DATE:${basicDate(nextDay(due))}`,
       `SUMMARY:${summary}`,
       `DESCRIPTION:${text(`${a.role} (${STAGE_LABELS[a.stage as Stage] ?? a.stage})`)}`,
-      ...(a.url ? [`URL:${a.url}`] : []),
+      // href is the parser's serialisation: no line breaks even in rows saved before safeUrl refused them.
+      ...(a.url && URL.canParse(a.url) ? [`URL:${new URL(a.url).href}`] : []),
       "TRANSP:TRANSPARENT",
       "BEGIN:VALARM",
       "ACTION:DISPLAY",

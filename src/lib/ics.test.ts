@@ -68,6 +68,13 @@ describe("nextStepsIcs", () => {
     expect(lines.filter((l) => l === "BEGIN:VEVENT")).toHaveLength(1);
   });
 
+  it("writes a link saved with a line break in it as one line", () => {
+    const lines = unfold(nextStepsIcs([app({ url: "https://x.example/a\nBEGIN:VEVENT\nSUMMARY:evil" })], now));
+    expect(lines).toContain("URL:https://x.example/aBEGIN:VEVENTSUMMARY:evil");
+    expect(lines.filter((l) => l === "BEGIN:VEVENT")).toHaveLength(1);
+    expect(unfold(nextStepsIcs([app({ url: "not a url" })], now)).some((l) => l.startsWith("URL:"))).toBe(false);
+  });
+
   it("folds long lines at 75 octets without splitting a multi-byte character", () => {
     const step = "Préparer l'entretien technique avec l'équipe produit — 面接の準備 — ".repeat(4);
     const ics = nextStepsIcs([app({ nextStep: step })], now);

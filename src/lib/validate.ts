@@ -54,6 +54,8 @@ export function pastDay(raw: Raw, key: string, todayIso: string): Result<string 
 
 export function safeUrl(s: string): boolean {
   if (s === "") return true;
+  // The URL parser silently drops tabs and newlines, so check the raw text: stored links must be one clean line.
+  if (/[\u0000-\u001f\u007f]/.test(s)) return false;
   try {
     return ["http:", "https:"].includes(new URL(s).protocol);
   } catch {

@@ -10,6 +10,9 @@ describe("parseApplication", () => {
     [{ role: "Dev" }, "Company"],
     [{ company: "A", role: "B", stage: "hired" }, "stage"],
     [{ company: "A", role: "B", url: "javascript:alert(1)" }, "http"],
+    // new URL() drops the line break and accepts it; the stored text would still carry it into a calendar file
+    [{ company: "A", role: "B", url: "https://x.example/a\nBEGIN:VEVENT" }, "http"],
+    [{ company: "A", role: "B", url: "https://x.example/\ta" }, "http"],
     [{ company: "A", role: "B", salaryMin: "lots" }, "whole number"],
     [{ company: "A", role: "B", salaryMin: "9", salaryMax: "5" }, "above"],
     [{ company: "A", role: "B", currency: "dollars" }, "3-letter"],
