@@ -212,6 +212,15 @@ describe("import/export", () => {
     expect(importCsv(d, row("11/20/2026 9:30"), now).applications).toBe(1); // what a spreadsheet writes back is still fine
     expect(importCsv(d, row("2026-11-22T20:00:00Z"), now).applications).toBe(1); // a clock a few hours ahead is tolerated
   });
+  it("keeps a date-only value on that calendar day in the local time zone", () => {
+    // Date.parse reads "2026-01-05" as UTC midnight, which is January 4 anywhere west of UTC.
+    importCsv(d, "company,role,stage,created_at\nA,B,applied,2026-01-05\n");
+    importJson(d, { app: "offerlog", applications: [{ company: "C", role: "D", stage: "applied", events: [{ toStage: "applied", at: "2026-01-06" }], notes: [{ body: "hi", createdAt: "2026-01-07" }] }] });
+    const local = (day: number) => new Date(2026, 0, day).toISOString();
+    expect(listApplications(d).map((a) => a.createdAt).sort()).toEqual([local(5), expect.any(String)]);
+    expect(listEvents(d).map((e) => e.at).sort()).toEqual([local(5), local(6)]);
+    expect(getApplication(d, 2)!.notes[0].createdAt).toBe(local(7));
+  });
   it("writes nothing when any row is invalid", () => {
     expect(() => importCsv(d, "company,role,stage\nA,B,applied\nC,D,hired\n")).toThrow(/Row 3/);
     expect(exportJson(d).applications).toEqual([]);

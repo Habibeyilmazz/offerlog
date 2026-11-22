@@ -68,8 +68,9 @@ export interface ImportResult {
 function timestamp(v: unknown, fallback: string, what: string, now: string): string {
   if (v == null || v === "") return fallback;
   const s = String(v);
-  const t = Date.parse(s);
   const ymd = /^\d{4}-\d{2}-\d{2}/.exec(s)?.[0];
+  // Date.parse reads a bare "2026-01-05" as UTC midnight, which is the day before west of UTC; take local midnight instead.
+  const t = Date.parse(ymd === s ? `${s}T00:00` : s);
   // Date.parse turns "5" into 2001, a spreadsheet serial like "45000" into the year 45000, and Feb 30 into March 2.
   // An all-numeric date like 02/30/2026 is local time; a rolled-over one reads a month and day that are not in the text.
   const nums = s.match(/\d+/g)?.map(Number) ?? [];
