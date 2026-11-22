@@ -1,3 +1,12 @@
+/** UTF-8 (a BOM is dropped), else Windows-1252, which Excel's plain "CSV (Comma delimited)" writes. */
+export function decodeText(bytes: Uint8Array): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
+
 /** Minimal RFC 4180 CSV: quoted fields, escaped quotes, CRLF or LF line endings, comma or semicolon separated. */
 
 export function parseCsv(text: string): string[][] {

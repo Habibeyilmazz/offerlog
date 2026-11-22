@@ -9,6 +9,7 @@ import { db } from "@/db/index.ts";
 import { aiEnabled, rewriteBullets } from "@/lib/ai.ts";
 import * as data from "@/lib/data.ts";
 import { onDay, plural, today } from "@/lib/format.ts";
+import { decodeText } from "@/lib/csv.ts";
 import { gapReport } from "@/lib/keywords.ts";
 import { isEmptyTracker, seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
@@ -209,7 +210,7 @@ export async function importFile(_prev: FormState, form: FormData): Promise<Form
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose a .csv or .json file." };
   if (file.size > MAX_IMPORT_BYTES) return { error: "That file is over 5 MB." };
-  const text = await file.text();
+  const text = decodeText(new Uint8Array(await file.arrayBuffer()));
   try {
     const isJson = file.name.toLowerCase().endsWith(".json") || text.trimStart().startsWith("{");
     const res = isJson ? importJson(db(), JSON.parse(text)) : importCsv(db(), text);

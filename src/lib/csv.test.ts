@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCsv, toCsv } from "./csv.ts";
+import { decodeText, parseCsv, toCsv } from "./csv.ts";
 
 describe("csv", () => {
   it("parses quotes, escaped quotes, commas, newlines and CRLF", () => {
@@ -11,6 +11,11 @@ describe("csv", () => {
   it("detects a semicolon separator past blank lines and quoted commas in the header", () => {
     expect(parseCsv('\ncompany;role;"Notes, misc"\nAcme, Inc.;Dev;x\n')).toEqual([["company", "role", "Notes, misc"], ["Acme, Inc.", "Dev", "x"]]);
     expect(parseCsv('a,"b;c"\n1,2\n')).toEqual([["a", "b;c"], ["1", "2"]]);
+  });
+  it("reads files saved by Excel as Windows-1252 as well as UTF-8", () => {
+    // Excel's plain "CSV (Comma delimited)" is not UTF-8; decoded as UTF-8, "Zürich" became "Z\uFFFDrich".
+    expect(decodeText(Uint8Array.from([0x5a, 0xfc, 0x72, 0x69, 0x63, 0x68, 0x2c, 0x80]))).toBe("Zürich,€");
+    expect(decodeText(new TextEncoder().encode("\uFEFFZürich,€"))).toBe("Zürich,€");
   });
   it("rejects an unterminated quote", () => {
     expect(() => parseCsv('"abc')).toThrow();
