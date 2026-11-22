@@ -44,8 +44,8 @@ export function Board({ cards }: { cards: CardData[] }) {
     startTransition(async () => {
       setOptimistic({ id, stage });
       try {
-        await moveApplication(id, stage);
-        setStatus(`Moved ${company} to ${STAGE_LABELS[stage]}.`);
+        if (await moveApplication(id, stage)) setStatus(`Moved ${company} to ${STAGE_LABELS[stage]}.`);
+        else setError(`${company} was deleted in another tab or window.`);
       } catch {
         // Offline or a server error: the optimistic move is undone when the transition ends; keep the board and say why.
         setError(`Could not move ${company} to ${STAGE_LABELS[stage]}. Check your connection and try again.`);

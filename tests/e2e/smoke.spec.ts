@@ -267,6 +267,19 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Ghosted" })).toContainText("Quarry Systems");
   await expect(page.getByRole("region", { name: "Waiting on a reply" })).toHaveCount(0);
 
+  // A card deleted in another tab cannot be moved from this stale board; it says so instead of announcing a move
+  const other = await page.context().newPage();
+  await other.goto("/");
+  await other.getByRole("link", { name: /^Quarry Systems/ }).click();
+  await other.getByText("Delete this application").click();
+  await other.getByRole("button", { name: "Delete application" }).click();
+  await expect(other.getByRole("heading", { name: "Board", level: 1 })).toBeVisible();
+  await other.close();
+  await page.getByLabel("Move Quarry Systems to stage").selectOption("offer");
+  await expect(page.getByRole("alert").filter({ hasText: "Quarry Systems was deleted" })).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("");
+  await expect(page.getByLabel("Move Quarry Systems to stage")).toHaveCount(0);
+
   // Sign out ends the session (offline it says so and stays put)
   await page.context().setOffline(true);
   await page.getByRole("button", { name: "Sign out" }).click();

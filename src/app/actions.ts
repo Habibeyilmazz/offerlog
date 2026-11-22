@@ -49,11 +49,13 @@ export async function saveApplication(_prev: FormState, form: FormData): Promise
   redirect(`/applications/${appId}`);
 }
 
-export async function moveApplication(appId: number, stage: string) {
+/** False when the application no longer exists (deleted in another tab). */
+export async function moveApplication(appId: number, stage: string): Promise<boolean> {
   await requireUser();
   if (!isStage(stage)) throw new Error("Unknown stage");
-  data.moveApplication(db(), id(appId), stage);
+  const moved = data.moveApplication(db(), id(appId), stage);
   revalidatePath("/", "layout");
+  return moved;
 }
 
 export async function deleteApplication(form: FormData) {
