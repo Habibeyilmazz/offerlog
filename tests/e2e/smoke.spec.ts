@@ -137,6 +137,7 @@ test("track an application end to end", async ({ page }) => {
   const filter = page.getByPlaceholder(/Filter by company/);
   await filter.fill("no such company");
   await expect(page.locator(".card")).toHaveCount(0);
+  await expect(page.getByRole("status")).toHaveText("Showing 0 of 1 application.");
   await filter.fill("referral");
   await expect(page.locator(".card")).toHaveCount(1);
 

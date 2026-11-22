@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { moveApplication } from "@/app/actions.ts";
-import { type DueState, matches } from "@/lib/format.ts";
+import { type DueState, matches, plural } from "@/lib/format.ts";
 import { STAGE_LABELS, STAGES, type Stage } from "@/lib/stages.ts";
 
 export interface CardData {
@@ -60,12 +60,21 @@ export function Board({ cards }: { cards: CardData[] }) {
       <div className="board-tools">
         <label>
           <span className="sr-only">Filter applications</span>
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by company, role, place or source" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setStatus("");
+            }}
+            placeholder="Filter by company, role, place or source"
+          />
         </label>
       </div>
     )}
+    {/* Screen readers hear how many cards a filter leaves, as sighted users see the columns shrink. */}
     <p role="status" className="sr-only">
-      {status}
+      {status || (q && `Showing ${visible.length} of ${plural(cards.length, "application")}.`)}
     </p>
     {error && (
       <p className="error" role="alert" style={{ marginBottom: 10 }}>
