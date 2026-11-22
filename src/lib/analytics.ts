@@ -101,7 +101,16 @@ export interface SourceRow {
 }
 
 export function responseBySource(apps: AppLite[], events: EventLite[]): SourceRow[] {
-  const sourceOf = new Map(apps.map((a) => [a.id, a.source.trim() || "Unknown"]));
+  // "LinkedIn", "linkedin " and "LINKEDIN" are one source, shown as first spelled.
+  const label = new Map<string, string>();
+  const sourceOf = new Map(
+    apps.map((a) => {
+      const name = a.source.trim().replace(/\s+/g, " ") || "Unknown";
+      const key = name.toLowerCase();
+      if (!label.has(key)) label.set(key, name);
+      return [a.id, label.get(key)!];
+    }),
+  );
   const groups = new Map<string, Reply[]>();
   for (const r of replies(events)) {
     const source = sourceOf.get(r.applicationId);

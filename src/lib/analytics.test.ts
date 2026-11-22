@@ -49,6 +49,10 @@ describe("responseBySource", () => {
       { source: "Referral", applied: 1, replied: 1, rate: 1, medianDays: 3 },
     ]);
   });
+  it("counts sources typed with different case or spacing as one", () => {
+    const apps = [{ id: 1, source: "LinkedIn" }, { id: 2, source: "linkedin " }, { id: 3, source: "LINKEDIN" }];
+    expect(responseBySource(apps, events)).toEqual([{ source: "LinkedIn", applied: 3, replied: 2, rate: 2 / 3, medianDays: 6.5 }]);
+  });
 });
 
 describe("weekly", () => {
