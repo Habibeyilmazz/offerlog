@@ -28,12 +28,12 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
 
       <div className="detail">
         <div>
-          <nav aria-label="Filter by stage" className="facts" style={{ marginTop: 0, marginBottom: 14 }}>
-            <Link href="/questions" aria-current={!filter ? "page" : undefined} style={{ fontWeight: !filter ? 700 : 400 }}>
+          <nav aria-label="Filter by stage" className="tabs">
+            <Link href="/questions" aria-current={!filter ? "page" : undefined}>
               All ({all.length})
             </Link>
             {PREP_STAGES.map((s) => (
-              <Link key={s} href={`/questions?stage=${s}`} aria-current={filter === s ? "page" : undefined} style={{ fontWeight: filter === s ? 700 : 400 }}>
+              <Link key={s} href={`/questions?stage=${s}`} aria-current={filter === s ? "page" : undefined}>
                 {STAGE_LABELS[s]} ({all.filter((q) => q.stage === s).length})
               </Link>
             ))}

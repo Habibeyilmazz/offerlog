@@ -251,6 +251,7 @@ main {
 }
 .page-head p {
   margin-top: 4px;
+  max-width: 75ch;
 }
 /* A long unbroken company or place wraps instead of widening the page. */
 .page-head > div {
@@ -370,8 +371,31 @@ textarea {
   width: 100%;
   min-width: 0;
 }
+/* One height for text fields, dates and menus, so a row of mixed fields lines up (native selects are shorter). */
+input:not([type="file"]),
+select {
+  height: 38px;
+}
 textarea {
   resize: vertical;
+}
+input[type="file"] {
+  padding: 5px 6px;
+  color: var(--muted);
+}
+input[type="file"]::file-selector-button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 4px 12px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+input[type="file"]:hover::file-selector-button {
+  border-color: var(--line-strong);
 }
 input:hover,
 select:hover,
@@ -387,6 +411,32 @@ textarea:hover {
 }
 .form-grid .wide {
   grid-column: 1 / -1;
+}
+/* The application form: each row is one group of related fields and always spans the full width. */
+.form-rows {
+  display: grid;
+  gap: 14px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.form-row.salary {
+  grid-template-columns: 1fr 1fr 6rem;
+}
+.form-row.next {
+  grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr);
+}
+@media (max-width: 560px) {
+  .form-row,
+  .form-row.next {
+    grid-template-columns: 1fr;
+  }
+  .form-row.salary {
+    grid-template-columns: 1fr 1fr 5rem;
+  }
 }
 .form-actions {
   display: flex;
@@ -436,6 +486,32 @@ textarea:hover {
 .inline-form > .error {
   flex-basis: 100%;
   order: 1;
+}
+
+/* Segmented filter links (question bank). */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.tabs a {
+  padding: 5px 10px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.tabs a:hover {
+  color: var(--ink);
+  border-color: var(--line);
+}
+.tabs a[aria-current="page"] {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+  font-weight: 650;
 }
 
 /* ---------- stage marks ---------- */
@@ -601,6 +677,7 @@ textarea:hover {
   gap: 4px 10px;
 }
 .card select {
+  height: auto;
   font-size: 0.8rem;
   padding: 3px 6px;
   color: var(--muted);
