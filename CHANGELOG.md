@@ -4,7 +4,36 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, first-run round: the repository was cloned fresh from GitHub into an empty folder and the README quickstart followed literally (`npm ci --ignore-scripts`, hash a password, build, `npm start`, sign in, add an application, load demo data, open every page, `npm run db:seed`). Everything worked as written; the fixes below are what a first user would still trip over.
+Latest, design round. Every page was screenshotted from `next start` with demo data and with an empty database, at 1440px and 390px, in light and dark, plus a keyboard-only pass over the board. The app already had a consistent token system, visible focus rings, reduced-motion handling and good empty states; the fixes below are what still looked broken, ragged or inconsistent.
+
+### Fixed
+
+- The weekly goal typed before a failed save (offline, server error) snapped back to the saved goal (reported as a gap last round; reproduced in Chromium: typed 7, it showed 4). React resets a form after its action even when `SubmitButton` catches the failure, and the reset lands in the action's transition, after an ordinary state update. `SubmitButton` now records the failed submission in a transition (so it commits with the reset) and an effect writes the typed text, number, date and menu values back. The smoke test types a goal offline and checks it stays.
+- An unknown address (`/anything`) showed Next.js's built-in black-and-white 404 page, in neither theme. `src/app/not-found.tsx` shows the app's own panel with **Back to the board**; the smoke test checks the 404 status, the link and axe in light, dark and 390px.
+
+### Changed
+
+- Add/edit application form: fields were poured into an auto-fill grid, so rows ended ragged (Source alone on a row, Work mode alone, Next step due alone, the currency box as wide as a salary). Fields now sit in rows of related fields that always fill the width: company and role; stage, date and source; location and work mode; salary from, to and a narrow currency; the posting link; next step (wide) and its due date; the job description. One column on phones, except the salary row.
+- Text fields, date fields and menus share one 38px height, the same as the buttons; native menus were 4px shorter, so mixed rows did not line up. The board card menus keep their compact size.
+- Question bank: the stage filter was a row of underlined links told apart only by bold; it is now a row of pill links with the current one outlined (`aria-current` unchanged).
+- The import file picker used the browser's grey "Choose File" button; it is styled like the app's secondary controls and is as tall as the buttons.
+- Page intro lines stop at 75 characters instead of running the full width of a wide screen.
+- Resume tailor: an empty chip list ("None") had no space above it, unlike the other report lines.
+- README screenshots regenerated from the running app with freshly seeded demo data (`scripts/screenshots.mjs`).
+
+### Checked, nothing to change
+
+- Empty states (board, analytics, question bank) give a next action; focus rings are visible on the sidebar, the Up next strip and the board; `prefers-reduced-motion` already turns off the one transition (column drop highlight). Pages answer in milliseconds, so no loading skeletons were added.
+- `docs/demo.gif` and `assets/social-preview.png` do not show the changed screens and were left as they are.
+
+### Notes for the next agent
+
+- `SubmitButton` restores text inputs, textareas and selects after a failure; checkboxes and radios are skipped on purpose (their state is `checked`, not `value`). No form using `SubmitButton` with `formAction` has one yet.
+- The board at 1440px still wraps longer company names onto two lines (seven 158px+ columns). Left as is: seeing every stage without scrolling sideways was the earlier choice.
+- Codex review unavailable again (usage limit until 09:32 local); the restore logic was reviewed by hand, which is where the checkbox guard came from.
+- Still open: a 2,000-card board has about 28,000 DOM nodes; the AI rewrite is only tested with a mocked client; the social preview needs a manual upload; private vulnerability reporting is off; no manual theme switch; no `script-src` CSP; 4 dev-only drizzle-kit advisories.
+
+Earlier, first-run round: the repository was cloned fresh from GitHub into an empty folder and the README quickstart followed literally (`npm ci --ignore-scripts`, hash a password, build, `npm start`, sign in, add an application, load demo data, open every page, `npm run db:seed`). Everything worked as written; the fixes below are what a first user would still trip over.
 
 ### Fixed
 
