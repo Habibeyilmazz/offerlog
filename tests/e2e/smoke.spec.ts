@@ -41,6 +41,13 @@ test("track an application end to end", async ({ page }) => {
   await page.reload();
   await expect(page.getByRole("region", { name: "Screening" })).toContainText("Acme Robotics");
   await expect(page.getByText("Email the recruiter")).toBeVisible();
+
+  // Drag and drop moves it too, and the move is saved
+  await page.locator(".card", { hasText: "Acme Robotics" }).dragTo(page.getByRole("region", { name: "Interview" }));
+  await expect(page.getByRole("region", { name: "Interview" })).toContainText("Acme Robotics", { timeout: 10_000 });
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Interview" })).toContainText("Acme Robotics");
+
   const filter = page.getByPlaceholder(/Filter by company/);
   await filter.fill("no such company");
   await expect(page.locator(".card")).toHaveCount(0);
@@ -63,7 +70,7 @@ test("track an application end to end", async ({ page }) => {
   const res = await page.request.get("/api/export?format=json");
   expect(res.status()).toBe(200);
   const dump = await res.json();
-  expect(dump.applications[0]).toMatchObject({ company: "Acme Robotics", stage: "screening" });
+  expect(dump.applications[0]).toMatchObject({ company: "Acme Robotics", stage: "interview" });
 
   // Import page works and a CSV lands on the board
   await page.getByRole("link", { name: "Import & export" }).click();
