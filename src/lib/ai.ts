@@ -38,7 +38,7 @@ export async function rewriteBullets(jobDescription: string, bullets: string, mi
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError) throw new Error("ANTHROPIC_API_KEY was rejected.");
     if (e instanceof Anthropic.RateLimitError) throw new Error("Rate limited by the API. Try again in a minute.");
-    if (e instanceof Anthropic.APIError) throw new Error(`API error ${e.status ?? ""}: ${e.message}`);
+    if (e instanceof Anthropic.APIError) throw new Error(`API error${e.status ? ` ${e.status}` : ""}: ${e.message}`);
     throw e;
   }
 }

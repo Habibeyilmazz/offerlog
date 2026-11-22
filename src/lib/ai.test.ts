@@ -14,7 +14,8 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
 
 const { rewriteBullets, rewritePrompt, aiEnabled } = await import("./ai.ts");
 
-beforeEach(() => create.mockReset());
+// `void`: a function returned from beforeEach runs as teardown, and mockReset returns the mock itself.
+beforeEach(() => void create.mockReset());
 
 describe("ai rewrite", () => {
   it("is off without a key", () => {
@@ -37,6 +38,12 @@ describe("ai rewrite", () => {
     create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "thinking", thinking: "" }, { type: "text", text: "- Shipped X\n" }] });
     await expect(rewriteBullets("jd", "- x", [])).resolves.toBe("- Shipped X");
     expect(create.mock.calls[0][0]).toMatchObject({ model: "claude-opus-5-5", fallbacks: "default" });
+  });
+
+  it("leaves out the status of an API error that has none", async () => {
+    const sdk = (await import("@anthropic-ai/sdk")).default; // the mock above, carrying the real error classes
+    create.mockRejectedValue(new sdk.APIError(undefined, undefined, "Connection error.", undefined)); // as APIConnectionError
+    await expect(rewriteBullets("jd", "- x", [])).rejects.toThrow("API error: Connection error.");
   });
 
   it("turns a refusal into a readable error", async () => {
