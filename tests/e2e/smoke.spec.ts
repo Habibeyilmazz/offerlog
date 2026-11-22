@@ -122,6 +122,19 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.locator(".timeline")).not.toContainText("Offer");
   await expect(page.locator(".facts")).toContainText("Interview");
 
+  // Question bank: a saved question clears the form and shows up as prep for that stage
+  await page.getByRole("link", { name: "Question bank" }).click();
+  const add = page.getByRole("region", { name: "Add a question" });
+  await add.getByLabel("Question").fill("Walk me through a project you are proud of");
+  await add.getByLabel("Category").selectOption("behavioral");
+  await add.getByLabel("Asked at").selectOption("interview");
+  await add.getByRole("button", { name: "Add question" }).click();
+  await expect(add.getByRole("status")).toHaveText("Added to the bank.");
+  await expect(add.getByLabel("Question")).toHaveValue("");
+  await expect(page.getByRole("region", { name: "behavioral" })).toContainText("Walk me through a project");
+  await page.goto(appPath);
+  await expect(page.getByText("1 question from your bank")).toBeVisible();
+
   // Keyword gap report
   await page.getByRole("link", { name: "Resume tailor" }).click();
   await page.getByLabel("Load a job description from an application").selectOption({ label: "Acme Robotics, Junior Developer" });
