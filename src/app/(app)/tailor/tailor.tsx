@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { aiRewrite } from "@/app/actions.ts";
 import { gapReport, type TermHit } from "@/lib/keywords.ts";
+import { useFormAction } from "../use-form-action.ts";
 
 interface Job {
   id: number;
@@ -29,7 +30,8 @@ function Chips({ items, kind }: { items: TermHit[]; kind: "hit" | "miss" | "plai
 export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: number | null; ai: boolean }) {
   const [jd, setJd] = useState(() => jobs.find((j) => j.id === initialJob)?.description ?? "");
   const [resume, setResume] = useState("");
-  const [state, action, pending] = useActionState(aiRewrite, {});
+  // Keeps the pasted bullets, and the page, when the API refuses or the connection drops.
+  const { state, action, pending, value, key } = useFormAction(aiRewrite);
 
   // The resume is kept in this browser only, as a convenience between visits.
   useEffect(() => {
@@ -118,12 +120,12 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
       <section className="panel" style={{ marginTop: 16 }} aria-labelledby="ai-h">
         <h2 id="ai-h">Rewrite bullet points</h2>
         {ai ? (
-          <form action={action} style={{ display: "grid", gap: 12 }}>
+          <form key={key} action={action} style={{ display: "grid", gap: 12 }}>
             <input type="hidden" name="jobDescription" value={jd} />
             <input type="hidden" name="resume" value={resume} />
             <label>
               Bullets to rewrite, one per line
-              <textarea name="bullets" rows={5} required maxLength={8000} placeholder="- Built a course planner used by 300 students" />
+              <textarea name="bullets" rows={5} required maxLength={8000} defaultValue={value("bullets")} placeholder="- Built a course planner used by 300 students" />
             </label>
             <p className="small muted">
               Sends the job description and these bullets to the Anthropic API. The model is told not to invent experience; check every line
