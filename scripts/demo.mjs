@@ -1,6 +1,6 @@
 // Records the README demo GIF from a running instance freshly seeded with `npm run db:seed`:
 //   node scripts/demo.mjs <baseUrl> <password> <out.gif>
-// It moves one demo card to Screening, so reseed afterwards (`npm run db:seed -- --force`). Needs ffmpeg on PATH.
+// It plans one follow-up and moves one demo card to Screening, so reseed afterwards (`npm run db:seed -- --force`). Needs ffmpeg on PATH.
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -46,6 +46,14 @@ async function glide(locator) {
 await page.goto(base + "/");
 await page.mouse.move(640, 400);
 await pause(1200);
+
+// Waiting on a reply: plan a follow-up, which moves the application to Up next.
+const followUp = page.getByRole("button", { name: "Follow up with Lumen Robotics" });
+await glide(followUp);
+await pause(400);
+await followUp.click();
+await followUp.waitFor({ state: "detached", timeout: 5000 });
+await pause(1800);
 
 // Drag a card from Applied to Screening.
 const card = page.locator(".card", { hasText: "Saltmarsh Studio" });

@@ -6,7 +6,7 @@
 
 Track every application on a board, keep notes and interview prep in one place, check your resume against a posting without sending it anywhere, and see which channels actually get replies. No account and no cloud service: it runs on your machine, your tracker lives in one SQLite file, and the JSON export is a complete backup of it.
 
-![Recorded from the running app with demo data: dragging a card to Screening, an application's timeline and prep, the resume tailor's keyword gap report, and analytics](docs/demo.gif)
+![Recorded from the running app with demo data: following up on an application waiting on a reply, dragging a card to Screening, an application's timeline and prep, the resume tailor's keyword gap report, and analytics](docs/demo.gif)
 
 ## Quickstart
 
@@ -92,7 +92,7 @@ npm run db:generate  # after changing src/db/schema.ts
 
 The Playwright test uses Chromium; install it once with `npx playwright install chromium`.
 
-README screenshots and the demo GIF come from a running instance seeded with `npm run db:seed`: `node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots` and `node scripts/demo.mjs http://localhost:4220 <password> docs/demo.gif` (needs ffmpeg; it moves one demo card, so reseed afterwards with `npm run db:seed -- --force`).
+README screenshots and the demo GIF come from a running instance seeded with `npm run db:seed`: `node scripts/screenshots.mjs http://localhost:4220 <password> docs/screenshots` and `node scripts/demo.mjs http://localhost:4220 <password> docs/demo.gif` (needs ffmpeg; it plans one follow-up and moves one demo card, so reseed afterwards with `npm run db:seed -- --force`).
 
 ## Compared with other options
 
