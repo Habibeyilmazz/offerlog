@@ -1,4 +1,4 @@
-/** Minimal RFC 4180 CSV: quoted fields, escaped quotes, CRLF or LF line endings. */
+/** Minimal RFC 4180 CSV: quoted fields, escaped quotes, CRLF or LF line endings, comma or semicolon separated. */
 
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -6,6 +6,9 @@ export function parseCsv(text: string): string[][] {
   let field = "";
   let quoted = false;
   const src = text.replace(/^﻿/, "");
+  const firstLine = src.slice(0, src.search(/[\r\n]|$/));
+  // Spreadsheets set to a European locale save with semicolons.
+  const sep = firstLine.includes(";") && !firstLine.includes(",") ? ";" : ",";
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (quoted) {
@@ -15,7 +18,7 @@ export function parseCsv(text: string): string[][] {
       } else if (c === '"') quoted = false;
       else field += c;
     } else if (c === '"' && field === "") quoted = true;
-    else if (c === ",") {
+    else if (c === sep) {
       row.push(field);
       field = "";
     } else if (c === "\n" || c === "\r") {
@@ -35,8 +38,9 @@ export function parseCsv(text: string): string[][] {
 }
 
 function escapeField(v: string): string {
-  // Leading = + - @ would run as a formula when the file is opened in a spreadsheet.
-  const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+  // Leading = + - @ would run as a formula when the file is opened in a spreadsheet. Text that
+  // already starts with apostrophes before one gets the guard too, so the import can strip exactly one.
+  const safe = /^'*[=+\-@\t\r]/.test(v) ? `'${v}` : v;
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 

@@ -3,7 +3,7 @@ import { applications, contacts, events, notes, questions } from "../db/schema.t
 import { parseCsv, toCsv } from "./csv.ts";
 import { getWeeklyGoal, setWeeklyGoal } from "./data.ts";
 import { isStage, QUESTION_CATEGORIES } from "./stages.ts";
-import { parseApplication, safeUrl, str } from "./validate.ts";
+import { parseApplication, safeUrl, str, ValidationError } from "./validate.ts";
 
 const CSV_COLUMNS = [
   ["company", "company"],
@@ -77,6 +77,16 @@ function asList(v: unknown, what: string): Record<string, unknown>[] {
   return v;
 }
 
+/** Prefixes a field error from `str` with the record it came from. */
+function labelled(label: string, f: () => void): void {
+  try {
+    f();
+  } catch (e) {
+    if (e instanceof ValidationError) throw new Error(`${label}: ${e.message}`);
+    throw e;
+  }
+}
+
 function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, now: string): void {
   const parsed = parseApplication(raw);
   if (!parsed.ok) throw new Error(`${label}: ${parsed.error}`);
@@ -87,13 +97,16 @@ function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, 
     .returning({ id: applications.id })
     .get();
 
-  const evs = asList(raw.events, `${label} events`);
-  if (evs.length === 0) evs.push({ fromStage: null, toStage: parsed.value.stage, at: createdAt });
-  for (const e of evs) {
+  const evs = asList(raw.events, `${label} events`).map((e) => {
     if (!isStage(e.toStage)) throw new Error(`${label}: event has unknown stage "${String(e.toStage)}".`);
-    const fromStage = isStage(e.fromStage) ? e.fromStage : null;
-    tx.insert(events).values({ applicationId: id, fromStage, toStage: e.toStage, at: timestamp(e.at, createdAt, `${label} event`) }).run();
-  }
+    return { applicationId: id, fromStage: isStage(e.fromStage) ? e.fromStage : null, toStage: e.toStage, at: timestamp(e.at, createdAt, `${label} event`) };
+  });
+  if (evs.length === 0) evs.push({ applicationId: id, fromStage: null, toStage: parsed.value.stage, at: createdAt });
+  // The board shows the stage, the timeline and analytics the events; they must agree. Ties go to the later entry, like (at, id).
+  const last = evs.reduce((a, b) => (b.at >= a.at ? b : a));
+  if (last.toStage !== parsed.value.stage)
+    throw new Error(`${label}: stage is ${parsed.value.stage}, but its last stage change is to ${last.toStage}.`);
+  tx.insert(events).values(evs).run();
   for (const c of asList(raw.contacts, `${label} contacts`)) {
     const name = str(c, "name");
     if (!name) continue;
@@ -115,15 +128,15 @@ export function importJson(d: Db, data: unknown, now = new Date().toISOString())
   const apps = asList(doc.applications, "applications");
   const qs = asList(doc.questions, "questions");
   d.transaction((tx) => {
-    apps.forEach((raw, i) => insertApplication(tx as unknown as Db, raw, `Application ${i + 1}`, now));
-    qs.forEach((q, i) => {
+    apps.forEach((raw, i) => labelled(`Application ${i + 1}`, () => insertApplication(tx as unknown as Db, raw, `Application ${i + 1}`, now)));
+    qs.forEach((q, i) => labelled(`Question ${i + 1}`, () => {
       const question = str(q, "question", 2000);
       const category = str(q, "category");
       const stage = str(q, "stage");
       if (!question || !(QUESTION_CATEGORIES as readonly string[]).includes(category) || !isStage(stage))
         throw new Error(`Question ${i + 1}: needs text, a known category and stage.`);
       tx.insert(questions).values({ question, category, stage, answer: str(q, "answer", 20000), createdAt: timestamp(q.createdAt, now, `Question ${i + 1}`) }).run();
-    });
+    }));
     const goal = Number((doc.settings as { weeklyGoal?: unknown } | undefined)?.weeklyGoal);
     if (Number.isInteger(goal) && goal > 0 && goal <= 100) setWeeklyGoal(tx as unknown as Db, goal);
   });
@@ -144,7 +157,7 @@ export function importCsv(d: Db, text: string, now = new Date().toISOString()): 
       const raw: Record<string, unknown> = {};
       keys.forEach((k, j) => {
         // Undo the spreadsheet formula guard added by exportCsv.
-        if (k) raw[k] = (cells[j] ?? "").replace(/^'(?=[=+\-@])/, "");
+        if (k) raw[k] = (cells[j] ?? "").replace(/^'(?='*[=+\-@])/, "");
       });
       insertApplication(tx as unknown as Db, raw, `Row ${i + 2}`, now);
     });

@@ -149,6 +149,36 @@ describe("import/export", () => {
     importCsv(d, "Company,Role,Stage,nextStep\nAcme,Dev,applied,'=call\n");
     expect(getApplication(d, 1)!.app.nextStep).toBe("=call");
   });
+  it("round-trips CSV text that starts with an apostrophe", () => {
+    importCsv(d, "company,role,location\nAcme,'=SUM quoted,'s-Hertogenbosch\n");
+    // A leading apostrophe before a formula character is the guard, so the first import strips it.
+    expect(getApplication(d, 1)!.app).toMatchObject({ role: "=SUM quoted", location: "'s-Hertogenbosch" });
+    updateApplication(d, 1, { role: "'=SUM quoted" });
+    const csv = exportCsv(d);
+    expect(csv).toContain(",'s-Hertogenbosch,"); // nothing added where no formula could start
+    const other = openDb(":memory:");
+    importCsv(other, csv);
+    expect(getApplication(other, 1)!.app).toMatchObject({ role: "'=SUM quoted", location: "'s-Hertogenbosch" });
+  });
+  it("reads semicolon-separated CSV from spreadsheets set to a European locale", () => {
+    expect(importCsv(d, "company;role;salary_min\r\nAcme, Inc.;Dev;50000\r\n").applications).toBe(1);
+    expect(getApplication(d, 1)!.app).toMatchObject({ company: "Acme, Inc.", role: "Dev", salaryMin: 50000 });
+  });
+  it("names the record when a nested JSON field is invalid", () => {
+    const long = "x".repeat(300);
+    expect(() => importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B", contacts: [{ name: long }] }] })).toThrow(
+      /^Application 1: name is longer/,
+    );
+    expect(() => importJson(d, { app: "offerlog", questions: [{ question: "x".repeat(3000), category: "technical", stage: "interview" }] })).toThrow(
+      /^Question 1: question is longer/,
+    );
+  });
+  it("refuses an application whose stage disagrees with its last stage change", () => {
+    const app = { company: "A", role: "B", stage: "offer", events: [{ toStage: "applied", at: "2026-01-01T09:00:00Z" }] };
+    expect(() => importJson(d, { app: "offerlog", applications: [app] })).toThrow(/^Application 1: stage is offer, but its last stage change is to applied/);
+    const reordered = { ...app, events: [{ fromStage: "applied", toStage: "offer", at: "2026-02-01T09:00:00Z" }, ...app.events] };
+    expect(importJson(d, { app: "offerlog", applications: [reordered] }).applications).toBe(1);
+  });
   it("writes nothing when any row is invalid", () => {
     expect(() => importCsv(d, "company,role,stage\nA,B,applied\nC,D,hired\n")).toThrow(/Row 3/);
     expect(exportJson(d).applications).toEqual([]);
