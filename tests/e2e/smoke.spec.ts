@@ -143,9 +143,27 @@ test("track an application end to end", async ({ page }) => {
   await page.goto(appPath);
   await expect(page.getByText("1 question from your bank")).toBeVisible();
 
-  // Keyword gap report
-  await page.getByRole("link", { name: "Resume tailor" }).click();
-  await page.getByLabel("Load a job description from an application").selectOption({ label: "Acme Robotics, Junior Developer" });
+  // Keyword gap report. The tailor page sends job labels only; a description is fetched when picked.
+  const tailorHtml = await (await page.request.get("/tailor")).text();
+  expect(tailorHtml).toContain("Acme Robotics, Junior Developer");
+  expect(tailorHtml).not.toContain("React, TypeScript and Docker");
+  await page.goto(appPath);
+  await page.getByRole("link", { name: "Tailor resume for this job" }).click();
+  await page.waitForURL(/\/tailor\?app=\d+$/);
+  const jd = page.getByRole("textbox", { name: "Job description" });
+  await expect(jd).toHaveValue(/React, TypeScript and Docker/);
+  const picker = page.getByLabel("Load a job description from an application");
+  await picker.selectOption({ label: "None, I will paste one" });
+  await expect(jd).toHaveValue("");
+  await page.context().setOffline(true);
+  await picker.selectOption({ label: "Acme Robotics, Junior Developer" });
+  const loadError = page.getByRole("alert").filter({ hasText: "Could not load that job description" });
+  await expect(loadError).toBeVisible();
+  await page.context().setOffline(false);
+  await picker.selectOption({ label: "None, I will paste one" });
+  await picker.selectOption({ label: "Acme Robotics, Junior Developer" });
+  await expect(jd).toHaveValue(/React, TypeScript and Docker/);
+  await expect(loadError).toHaveCount(0);
   await page.getByLabel("Your resume").fill("Built apps in React.");
   await expect(page.locator(".chip.miss", { hasText: "TypeScript" })).toBeVisible();
   await expect(page.locator(".chip.hit", { hasText: "React" })).toBeVisible();

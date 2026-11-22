@@ -1,14 +1,13 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { aiRewrite } from "@/app/actions.ts";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { aiRewrite, jobDescription } from "@/app/actions.ts";
 import { gapReport, type TermHit } from "@/lib/keywords.ts";
 import { useFormAction } from "../use-form-action.ts";
 
 interface Job {
   id: number;
   label: string;
-  description: string;
 }
 
 const RESUME_KEY = "offerlog.resume";
@@ -27,8 +26,10 @@ function Chips({ items, kind }: { items: TermHit[]; kind: "hit" | "miss" | "plai
   );
 }
 
-export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: number | null; ai: boolean }) {
-  const [jd, setJd] = useState(() => jobs.find((j) => j.id === initialJob)?.description ?? "");
+export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: { id: number; description: string } | null; ai: boolean }) {
+  const [jd, setJd] = useState(initialJob?.description ?? "");
+  const [jobError, setJobError] = useState("");
+  const picked = useRef("");
   const [resume, setResume] = useState("");
   // Keeps the pasted bullets, and the page, when the API refuses or the connection drops.
   const { state, action, pending, value, key } = useFormAction(aiRewrite);
@@ -46,6 +47,18 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
     } catch {}
   }
 
+  async function pickJob(v: string) {
+    picked.current = v;
+    setJobError("");
+    if (!v) return setJd("");
+    try {
+      const text = await jobDescription(Number(v));
+      if (picked.current === v) setJd(text); // a slower answer for an earlier pick must not win
+    } catch {
+      if (picked.current === v) setJobError("Could not load that job description. Check your connection and pick it again.");
+    }
+  }
+
   const djd = useDeferredValue(jd);
   const dresume = useDeferredValue(resume);
   const report = useMemo(() => (djd.trim() && dresume.trim() ? gapReport(djd, dresume) : null), [djd, dresume]);
@@ -55,7 +68,7 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
       {jobs.length > 0 && (
         <label className="job-picker">
           Load a job description from an application
-          <select defaultValue={initialJob ?? ""} onChange={(e) => setJd(jobs.find((j) => j.id === Number(e.target.value))?.description ?? "")}>
+          <select defaultValue={initialJob?.id ?? ""} onChange={(e) => pickJob(e.target.value)}>
             <option value="">None, I will paste one</option>
             {jobs.map((j) => (
               <option key={j.id} value={j.id}>
@@ -64,6 +77,11 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
             ))}
           </select>
         </label>
+      )}
+      {jobError && (
+        <p className="error" role="alert">
+          {jobError}
+        </p>
       )}
       <div className="tailor-inputs">
         <label>

@@ -215,6 +215,12 @@ export async function loadDemoData() {
   redirect("/");
 }
 
+/** One application's saved job description, for the tailor's job picker (the page only sends the labels). */
+export async function jobDescription(appId: number): Promise<string> {
+  await requireUser();
+  return data.getApplication(db(), id(appId))?.app.description ?? "";
+}
+
 export async function aiRewrite(_prev: FormState & { text?: string }, form: FormData): Promise<FormState & { text?: string }> {
   await requireUser();
   if (!aiEnabled()) return { error: "AI rewrite needs ANTHROPIC_API_KEY on the server." };

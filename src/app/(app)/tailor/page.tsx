@@ -8,10 +8,11 @@ export const metadata = { title: "Resume tailor" };
 
 export default async function TailorPage({ searchParams }: { searchParams: Promise<{ app?: string }> }) {
   await requireUser();
-  const jobs = listApplications(db())
-    .filter((a) => a.description)
-    .map((a) => ({ id: a.id, label: `${a.company}, ${a.role}`, description: a.description }));
-  const initial = Number((await searchParams).app);
+  const wanted = Number((await searchParams).app);
+  const withDescription = listApplications(db()).filter((a) => a.description);
+  const initial = withDescription.find((a) => a.id === wanted);
+  // Only labels go to the browser; a description is fetched when it is picked (all of them was megabytes on a long search).
+  const jobs = withDescription.map((a) => ({ id: a.id, label: `${a.company}, ${a.role}` }));
   return (
     <>
       <div className="page-head">
@@ -23,7 +24,7 @@ export default async function TailorPage({ searchParams }: { searchParams: Promi
           </p>
         </div>
       </div>
-      <Tailor jobs={jobs} initialJob={jobs.some((j) => j.id === initial) ? initial : null} ai={aiEnabled()} />
+      <Tailor jobs={jobs} initialJob={initial ? { id: initial.id, description: initial.description } : null} ai={aiEnabled()} />
     </>
   );
 }
