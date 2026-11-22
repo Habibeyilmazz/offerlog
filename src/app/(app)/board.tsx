@@ -1,0 +1,107 @@
+"use client";
+
+import Link from "next/link";
+import { useOptimistic, useState, useTransition } from "react";
+import { moveApplication } from "@/app/actions.ts";
+import type { DueState } from "@/lib/format.ts";
+import { STAGE_LABELS, STAGES, type Stage } from "@/lib/stages.ts";
+
+export interface CardData {
+  id: number;
+  company: string;
+  role: string;
+  stage: Stage;
+  salary: string;
+  where: string;
+  due: { label: string; state: DueState } | null;
+}
+
+export function Board({ cards }: { cards: CardData[] }) {
+  const [optimistic, setOptimistic] = useOptimistic(cards, (state, move: { id: number; stage: Stage }) =>
+    state.map((c) => (c.id === move.id ? { ...c, stage: move.stage } : c)),
+  );
+  const [pending, startTransition] = useTransition();
+  const [movingId, setMovingId] = useState<number | null>(null);
+  const [dropStage, setDropStage] = useState<Stage | null>(null);
+
+  function move(id: number, stage: Stage) {
+    setMovingId(id);
+    startTransition(async () => {
+      setOptimistic({ id, stage });
+      await moveApplication(id, stage);
+      setMovingId(null);
+    });
+  }
+
+  return (
+    <div className="board">
+      {STAGES.map((stage) => {
+        const items = optimistic.filter((c) => c.stage === stage);
+        return (
+          <section
+            key={stage}
+            aria-label={STAGE_LABELS[stage]}
+            className={`column${dropStage === stage ? " drop-target" : ""}`}
+            style={{ "--stage": `var(--st-${stage})` } as React.CSSProperties}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDropStage(stage);
+            }}
+            onDragLeave={() => setDropStage(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDropStage(null);
+              const id = Number(e.dataTransfer.getData("text/plain"));
+              const card = optimistic.find((c) => c.id === id);
+              if (card && card.stage !== stage) move(id, stage);
+            }}
+          >
+            <div className="column-head">
+              <span className="stage-dot" />
+              <h2 style={{ fontSize: "0.95rem" }}>{STAGE_LABELS[stage]}</h2>
+              <span className="count">{items.length}</span>
+            </div>
+            {items.length === 0 ? (
+              <p className="empty">No applications</p>
+            ) : (
+              <ol>
+                {items.map((c) => (
+                  <li
+                    key={c.id}
+                    className="card"
+                    draggable
+                    aria-busy={pending && movingId === c.id}
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", String(c.id))}
+                  >
+                    <Link href={`/applications/${c.id}`} className="company">
+                      {c.company}
+                    </Link>
+                    <span className="role">{c.role}</span>
+                    {(c.salary || c.where) && (
+                      <span className="meta">
+                        {c.salary && <span>{c.salary}</span>}
+                        {c.where && <span>{c.where}</span>}
+                      </span>
+                    )}
+                    {c.due && <span className={`due ${c.due.state}`} style={{ justifySelf: "start" }}>{c.due.label}</span>}
+                    <select
+                      aria-label={`Move ${c.company} to stage`}
+                      value={c.stage}
+                      onChange={(e) => move(c.id, e.target.value as Stage)}
+                    >
+                      {STAGES.map((s) => (
+                        <option key={s} value={s}>
+                          {STAGE_LABELS[s]}
+                        </option>
+                      ))}
+                    </select>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
