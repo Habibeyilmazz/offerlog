@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export const aiEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
-export const REWRITE_SYSTEM = `You help a student or early-career developer tailor resume bullet points to one job description.
+const REWRITE_SYSTEM = `You help a student or early-career developer tailor resume bullet points to one job description.
 Rules:
 - Rewrite only the bullets you are given, one output bullet per input bullet, in the same order.
 - Never invent experience, employers, numbers, tools or results that are not in the original bullet. If a missing keyword cannot honestly be added to a bullet, leave it out.

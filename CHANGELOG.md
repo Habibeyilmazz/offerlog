@@ -4,7 +4,45 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, feature round: calendar export. Using the demo board, the "Up next" reminders only existed inside offerlog, so a phone screen due tomorrow was easy to miss unless the app was open; calendar export was the top item on the roadmap that needs no new data.
+Latest, performance and accessibility round. Measured first with a Playwright script against `next start` (demo data, and a copy with 2,000 applications of about 4.9 KB job description each), axe-core 4.10.3 (WCAG 2.2 AA + best practice) on every page in light, dark and at 390px, and a keyboard-only walk through the board and the application page. Then the top offenders were fixed and measured again.
+
+### Measured (Chromium, local, median of 3 to 5 loads)
+
+| What | Before | After |
+| --- | --- | --- |
+| `/tailor` HTML with 2,000 applications | 9,858 KB decoded (79.5 KB gzip), TTFB 91 ms | 300 KB decoded (32.9 KB gzip), TTFB 24-29 ms |
+| Board with 2,000 cards: first paint / load event | 396 ms / 461 ms | 208 ms / 213 ms |
+| JSON export, 20,000 notes on one application | 310 ms | 12 ms |
+| axe-core violations | sign-in: `landmark-one-main`, `region`; analytics at 390px: `scrollable-region-focusable` | none on any page, light, dark or 390px |
+
+Unchanged and fine: with demo data every page answers in at most 17 ms; each page loads 137-142 KB of compressed JavaScript (Next.js and React only, no other client libraries) and 4.3 KB of CSS; a fresh database and server are healthy in 0.26 s; `listApplications` reads 2,000 rows in 11-16 ms.
+
+### Fixed
+
+- Performance: the resume tailor sent every saved job description to the browser to fill its job picker; with a long search the page was megabytes. It now sends labels only and fetches one description when it is picked (`jobDescription` server action, session-checked). A failed fetch says so (`role="alert"`) and a slower answer for an earlier pick cannot overwrite a later one.
+- Performance: off-screen board cards skip layout and paint (`content-visibility: auto`); focus rings and drag and drop are unchanged (checked in screenshots and the smoke test).
+- Performance: the JSON export grouped notes, contacts and stage changes by copying each list for every row (quadratic per application).
+- Accessibility: choosing a stage in a card's menu moved the card to another column and dropped keyboard focus to the top of the page, silently. Focus now stays on that card's menu and a polite status says "Moved X to Screening.".
+- Accessibility: every submit button was `disabled` while its action ran, and disabling the focused button drops focus to the top of the page; a saved edit panel, a deleted note or contact, or a refused form that is remounted to refill it did the same. `SubmitButton` now uses `aria-disabled` and ignores presses while pending (a delayed server got one request for three presses), the add/edit application, question, import, sign-in and AI rewrite buttons use it, and `FocusKeeper` (`src/app/(app)/focus-keeper.tsx`) puts focus back on the same button when its form shows an error, else on the heading of the section the form was in, else on `<main>`.
+- Accessibility: the sign-in page had no `<main>` landmark; the "Response rate by source" table scrolls sideways on phones but could not be reached with the keyboard (now a focusable, named region).
+
+### Added
+
+- The smoke test scans every page with axe-core (dev dependency `axe-core`) in light, dark and 390px width with data on it, plus the sign-in page, and fails on any violation; it also checks the board's kept focus and announcement, the kept focus after a refused note and after a saved edit, and that `/tailor` no longer contains job descriptions.
+
+### Checked, nothing to change
+
+- Dead code and dependencies: every export, CSS class and dependency is used (one internal constant, `REWRITE_SYSTEM`, is no longer exported). SEO: the app is private and already sends `noindex, nofollow`; nothing to add.
+
+### Notes for the next agent
+
+- Not fixed: a 2,000-card board still has about 28,000 DOM nodes (mostly the seven `<option>`s of each card's stage menu). It loads in about 0.2 s now; virtualising the columns would be the next step if someone tracks far more.
+- `FocusKeeper` reacts only when focus has fallen to `<body>` within 30 s of a form submit; it never moves focus away from an element the user is on. New forms that sit in a `<section>` with an `<h2>` get this for free.
+- New pending buttons: use `SubmitButton`, never `disabled={pending}`.
+- The scratchpad shared by agents on this machine is not private: another agent overwrote a measurement script in it mid-round. Use a subfolder of your own.
+- Still open from earlier rounds: AI rewrite tested only with a mocked client; delete and "Mark done" show the in-app error page when offline (roadmap); no calendar subscription feed and no live calendar-app import test; the social preview needs a manual upload; private vulnerability reporting is off; no manual theme switch; no `script-src` CSP; 4 dev-only drizzle-kit advisories (axe-core adds none).
+
+Earlier, feature round: calendar export. Using the demo board, the "Up next" reminders only existed inside offerlog, so a phone screen due tomorrow was easy to miss unless the app was open; calendar export was the top item on the roadmap that needs no new data.
 
 ### Added
 

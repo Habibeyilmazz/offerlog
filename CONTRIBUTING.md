@@ -18,7 +18,7 @@ npm run dev            # http://localhost:4220
 ```sh
 npm run typecheck
 npm test                              # vitest, runs with TZ=Pacific/Auckland
-npm run build && npm run test:e2e     # Playwright smoke test on :4222 with a throwaway database
+npm run build && npm run test:e2e     # Playwright smoke test on :4222 with a throwaway database, including an axe-core scan of every page
 ```
 
 CI runs the same steps, plus `npm audit --omit=dev --audit-level=moderate` and a Docker build.

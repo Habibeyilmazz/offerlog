@@ -57,7 +57,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 - **Import and export**: full JSON backup and restore, and CSV for spreadsheets (comma or semicolon separated). Imports are validated and all-or-nothing.
 - **Calendar export**: download your open next steps as an iCalendar (`.ics`) file from Import & export, or one next step with **Add to calendar** on its application, and import it into any calendar app that reads `.ics`. Each is an all-day event on its due date with a 9:00 reminder, the role and stage as its description and the posting link. Event IDs stay the same across downloads, so calendars that match events by ID update them on a re-import; a step marked done is not removed from your calendar. Steps on rejected or ghosted applications are left out.
 - **Single-user login** with a hashed password, an HttpOnly session cookie and rate-limited sign-in.
-- **Light and dark theme** following your system setting, a phone layout where board columns snap one at a time, keyboard access throughout (skip link, visible focus, a stage menu on every card), and no animation when reduced motion is requested.
+- **Light and dark theme** following your system setting, a phone layout where board columns snap one at a time, keyboard access throughout (skip link, visible focus, a stage menu on every card, focus kept in place after a move or a save, moves announced to screen readers), and no animation when reduced motion is requested. The smoke test runs an axe-core WCAG 2.2 AA scan of every page in light, dark and phone width.
 
 | Board | Application detail | Resume tailor |
 | --- | --- | --- |
