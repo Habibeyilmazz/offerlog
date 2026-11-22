@@ -88,6 +88,10 @@ const daysAgo = (now: Date, days: number) => new Date(now.getTime() - days * 86_
 const isoDate = (now: Date, days: number) => new Date(now.getTime() + days * 86_400_000).toLocaleDateString("sv-SE"); // local, like today()
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+/** No applications and no questions: the only state the board's "Load demo data" may replace, since seeding deletes both. */
+export const isEmptyTracker = (d: Db): boolean =>
+  !d.select({ id: applications.id }).from(applications).limit(1).get() && !d.select({ id: questions.id }).from(questions).limit(1).get();
+
 /** Replaces all data with the fictional demo set, dated relative to `now`. */
 export function seedDemo(d: Db, now = new Date()): void {
   d.transaction((tx) => {

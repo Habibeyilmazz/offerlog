@@ -3,6 +3,7 @@ import { loadDemoData } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
 import { listApplications } from "@/lib/data.ts";
 import { due, money, place, today } from "@/lib/format.ts";
+import { isEmptyTracker } from "@/lib/seed.ts";
 import { requireUser } from "@/lib/session.ts";
 import { STAGES, type Stage } from "@/lib/stages.ts";
 import { Board, type CardData } from "./board.tsx";
@@ -12,6 +13,7 @@ export const metadata = { title: "Board" };
 export default async function BoardPage() {
   await requireUser();
   const apps = listApplications(db());
+  const canDemo = apps.length === 0 && isEmptyTracker(db());
   const now = today();
   const cards: CardData[] = apps.map((a) => ({
     id: a.id,
@@ -47,15 +49,19 @@ export default async function BoardPage() {
         <div className="panel" style={{ maxWidth: 560, marginBottom: 24 }}>
           <h2>Start your log</h2>
           <p className="muted" style={{ margin: "8px 0 16px" }}>
-            Add the first job you are eyeing, import a CSV or JSON file, or explore with fictional demo data.
+            {canDemo
+              ? "Add the first job you are eyeing, import a CSV or JSON file, or explore with fictional demo data."
+              : "Add the first job you are eyeing, or import a CSV or JSON file. Demo data is only offered while the question bank is empty too, so it cannot replace your questions."}
           </p>
           <div className="form-actions" style={{ marginTop: 0 }}>
             <Link href="/applications/new" className="btn">
               Add application
             </Link>
-            <form action={loadDemoData}>
-              <button className="btn secondary">Load demo data</button>
-            </form>
+            {canDemo && (
+              <form action={loadDemoData}>
+                <button className="btn secondary">Load demo data</button>
+              </form>
+            )}
             <Link href="/data">Import a file</Link>
           </div>
         </div>

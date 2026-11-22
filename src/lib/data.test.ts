@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../db/index.ts";
-import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote, removeEvent, setEventDate } from "./data.ts";
+import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, saveQuestion, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote, removeEvent, setEventDate } from "./data.ts";
 import { funnel } from "./analytics.ts";
 import { due, today } from "./format.ts";
-import { seedDemo } from "./seed.ts";
+import { isEmptyTracker, seedDemo } from "./seed.ts";
 import { exportCsv, exportJson, importCsv, importJson } from "./transfer.ts";
 import { parseApplication } from "./validate.ts";
 
@@ -35,6 +35,14 @@ describe("applications", () => {
     deleteApplication(d, id);
     expect(getApplication(d, id)).toBeNull();
     expect(listEvents(d)).toEqual([]);
+  });
+  it("offers demo data only while there are no applications and no questions", () => {
+    expect(isEmptyTracker(d)).toBe(true);
+    saveQuestion(d, { question: "Why us?", category: "company", stage: "screening", answer: "my notes" });
+    expect(isEmptyTracker(d)).toBe(false); // seeding now would delete this question bank
+    const other = openDb(":memory:");
+    createApplication(other, input({ company: "A", role: "B" }));
+    expect(isEmptyTracker(other)).toBe(false);
   });
   it("dates demo next steps in local time", () => {
     const now = new Date(2026, 10, 22, 8); // 08:00 in Auckland is the previous day in UTC

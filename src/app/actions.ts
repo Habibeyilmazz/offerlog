@@ -10,7 +10,7 @@ import { aiEnabled, rewriteBullets } from "@/lib/ai.ts";
 import * as data from "@/lib/data.ts";
 import { onDay, plural, today } from "@/lib/format.ts";
 import { gapReport } from "@/lib/keywords.ts";
-import { seedDemo } from "@/lib/seed.ts";
+import { isEmptyTracker, seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
 import { isStage, QUESTION_CATEGORIES } from "@/lib/stages.ts";
 import { importCsv, importJson } from "@/lib/transfer.ts";
@@ -210,7 +210,7 @@ export async function importFile(_prev: FormState, form: FormData): Promise<Form
 /** Only fills an empty tracker, so it can never overwrite real data. */
 export async function loadDemoData() {
   await requireUser();
-  if (data.listApplications(db()).length === 0) seedDemo(db());
+  if (isEmptyTracker(db())) seedDemo(db());
   revalidatePath("/", "layout");
   redirect("/");
 }
