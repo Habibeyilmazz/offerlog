@@ -212,7 +212,8 @@ export interface GapReport {
 }
 
 function words(text: string): string[] {
-  return text.toLowerCase().match(/[a-z][a-z0-9+#.-]*[a-z0-9+#]|[a-z]/g) ?? [];
+  // Any script, so "développeur" stays one word; \p{M} keeps combining marks such as the dot in a lowercased "İ".
+  return text.toLowerCase().match(/\p{L}[\p{L}\p{M}\p{N}+#.-]*[\p{L}\p{M}\p{N}+#]|\p{L}/gu) ?? [];
 }
 
 export function gapReport(jobDescription: string, resume: string): GapReport {

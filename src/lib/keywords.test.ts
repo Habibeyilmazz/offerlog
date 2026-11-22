@@ -42,6 +42,14 @@ describe("gapReport", () => {
     expect(r.coverage).toBeLessThan(0.5);
     expect(gapReport("", "").coverage).toBeNull();
   });
+  it("keeps accented and non-Latin words whole", () => {
+    expect(names(gapReport("Développeur développeur, Entwicklung Entwicklung, разработчик разработчик", "x").otherTerms)).toEqual([
+      "développeur",
+      "entwicklung",
+      "разработчик",
+    ]);
+    expect(gapReport("Développeur développeur", "Développeur").otherTerms).toEqual([]);
+  });
   it("is deterministic", () => {
     expect(gapReport(jd, resume)).toEqual(r);
   });
