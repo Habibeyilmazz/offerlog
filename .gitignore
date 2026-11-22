@@ -2,7 +2,7 @@ node_modules/
 .next/
 out/
 coverage/
-data/
+/data/
 *.db
 *.db-journal
 *.db-wal

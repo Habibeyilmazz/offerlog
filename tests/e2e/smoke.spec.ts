@@ -65,6 +65,19 @@ test("track an application end to end", async ({ page }) => {
   const dump = await res.json();
   expect(dump.applications[0]).toMatchObject({ company: "Acme Robotics", stage: "screening" });
 
+  // Import page works and a CSV lands on the board
+  await page.getByRole("link", { name: "Import & export" }).click();
+  await expect(page.getByRole("heading", { name: "Import & export", level: 1 })).toBeVisible();
+  await page.getByLabel("CSV or JSON file").setInputFiles({
+    name: "apps.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("company,role,stage\nBramble Bank,Graduate Engineer,applied\n"),
+  });
+  await page.getByRole("button", { name: "Import file" }).click();
+  await expect(page.getByRole("status")).toHaveText("Imported 1 applications.");
+  await page.getByRole("link", { name: "Board" }).first().click();
+  await expect(page.getByRole("region", { name: "Applied" })).toContainText("Bramble Bank");
+
   // Sign out ends the session
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
