@@ -8,13 +8,13 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/index.ts";
 import { aiEnabled, rewriteBullets } from "@/lib/ai.ts";
 import * as data from "@/lib/data.ts";
-import { plural } from "@/lib/format.ts";
+import { onDay, plural, today } from "@/lib/format.ts";
 import { gapReport } from "@/lib/keywords.ts";
 import { seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
 import { isStage, QUESTION_CATEGORIES } from "@/lib/stages.ts";
 import { importCsv, importJson } from "@/lib/transfer.ts";
-import { parseApplication, parseContact, str, ValidationError } from "@/lib/validate.ts";
+import { parseApplication, parseContact, pastDay, str, ValidationError } from "@/lib/validate.ts";
 
 export type FormState = { error?: string; message?: string };
 
@@ -40,7 +40,10 @@ export async function saveApplication(_prev: FormState, form: FormData): Promise
     appId = id(form.get("id"));
     if (!data.updateApplication(db(), appId, parsed.value)) return { error: "That application no longer exists." };
   } else {
-    appId = data.createApplication(db(), parsed.value);
+    // Backfilling: the day the application reached its starting stage, if not today.
+    const day = pastDay(fields(form), "stageDate", today());
+    if (!day.ok) return { error: day.error };
+    appId = data.createApplication(db(), parsed.value, day.value ? onDay(new Date().toISOString(), day.value) : undefined);
   }
   revalidatePath("/", "layout");
   redirect(`/applications/${appId}`);
@@ -67,6 +70,24 @@ export async function completeNextStep(form: FormData) {
   if (!detail) return;
   if (detail.app.nextStep) data.addNote(db(), appId, `Done: ${detail.app.nextStep}`, null);
   data.updateApplication(db(), appId, { nextStep: "", nextStepDue: null });
+  revalidatePath("/", "layout");
+}
+
+export async function updateEventDate(_prev: FormState, form: FormData): Promise<FormState> {
+  await requireUser();
+  const raw = fields(form);
+  const day = pastDay(raw, "date", today());
+  if (!day.ok) return { error: day.error };
+  if (!day.value) return { error: "Pick a date." };
+  const error = data.setEventDate(db(), id(raw.id), day.value);
+  if (error) return { error };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function removeEvent(form: FormData) {
+  await requireUser();
+  data.removeEvent(db(), id(form.get("id")));
   revalidatePath("/", "layout");
 }
 

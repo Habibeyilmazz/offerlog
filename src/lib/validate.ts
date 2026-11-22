@@ -44,7 +44,7 @@ export function isIsoDate(s: string): boolean {
 
 /** Optional YYYY-MM-DD field that may not be later than `todayIso`; null when empty. */
 export function pastDay(raw: Raw, key: string, todayIso: string): Result<string | null> {
-  const s = str(raw, key, 40);
+  const s = String(raw[key] ?? "").trim();
   if (!s) return { ok: true, value: null };
   if (!isIsoDate(s)) return { ok: false, error: "Dates must be YYYY-MM-DD." };
   if (s > todayIso) return { ok: false, error: "The date cannot be in the future." };

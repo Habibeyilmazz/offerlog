@@ -10,9 +10,10 @@ import { ApplicationForm } from "../../application-form.tsx";
 import { StagePill } from "../../stage-pill.tsx";
 import { SubmitButton } from "../../submit-button.tsx";
 import { ContactForm } from "./contact-form.tsx";
+import { EventForm } from "./event-form.tsx";
 
 type Entry =
-  | { kind: "event"; key: string; at: string; from: Stage | null; to: Stage }
+  | { kind: "event"; key: string; at: string; id: number; from: Stage | null; to: Stage }
   | { kind: "note"; key: string; at: string; id: number; body: string };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -57,13 +58,16 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
   const stage = app.stage as Stage;
 
   const timeline: Entry[] = [
-    ...events.map((e) => ({ kind: "event" as const, key: `e${e.id}`, at: e.at, from: e.fromStage as Stage | null, to: e.toStage as Stage })),
+    ...events.map((e) => ({ kind: "event" as const, key: `e${e.id}`, at: e.at, id: e.id, from: e.fromStage as Stage | null, to: e.toStage as Stage })),
     ...notes.filter((n) => !n.stage).map((n) => ({ kind: "note" as const, key: `n${n.id}`, at: n.createdAt, id: n.id, body: n.body })),
   ].sort((a, b) => b.at.localeCompare(a.at));
 
+  const firstEvent = events[0]?.id;
+  const lastEvent = events.at(-1)?.id;
+  const todayIso = today();
   const questions = listQuestions(db());
   const salary = money(app.salaryMin, app.salaryMax, app.currency);
-  const nextDue = app.nextStepDue ? due(app.nextStepDue, today()) : null;
+  const nextDue = app.nextStepDue ? due(app.nextStepDue, todayIso) : null;
 
   return (
     <>
@@ -125,17 +129,32 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                   {t.kind === "event" ? (
                     <>
                       <span className="stage-dot mark" style={{ "--stage": `var(--st-${t.to})` } as React.CSSProperties} />
-                      <span className="body">
-                        {t.from ? (
-                          <>
-                            Moved from {STAGE_LABELS[t.from]} to <strong>{STAGE_LABELS[t.to]}</strong>
-                          </>
-                        ) : (
-                          <>
-                            Added as <strong>{STAGE_LABELS[t.to]}</strong>
-                          </>
-                        )}
-                      </span>
+                      <div className="body">
+                        <p>
+                          {t.from ? (
+                            <>
+                              Moved from {STAGE_LABELS[t.from]} to <strong>{STAGE_LABELS[t.to]}</strong>
+                            </>
+                          ) : (
+                            <>
+                              Added as <strong>{STAGE_LABELS[t.to]}</strong>
+                            </>
+                          )}
+                        </p>
+                        {/* Keyed by the saved date, so a successful save closes the panel. */}
+                        <details className="edit" key={t.at}>
+                          <summary>
+                            Edit<span className="sr-only"> {t.from ? `move to ${STAGE_LABELS[t.to]}` : `date added`}</span>
+                          </summary>
+                          <EventForm
+                            id={t.id}
+                            day={today(new Date(t.at))}
+                            max={todayIso}
+                            first={t.id === firstEvent}
+                            revertTo={t.id === lastEvent && t.from ? STAGE_LABELS[t.from] : undefined}
+                          />
+                        </details>
+                      </div>
                     </>
                   ) : (
                     <>

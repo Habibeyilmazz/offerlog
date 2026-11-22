@@ -23,6 +23,7 @@ test("track an application end to end", async ({ page }) => {
   await page.getByLabel("Company").fill("Acme Robotics");
   await page.getByLabel("Role").fill("Junior Developer");
   await page.getByLabel("Stage").selectOption("applied");
+  await page.getByLabel("Date", { exact: true }).fill("2025-03-03"); // backfilled: applied before using offerlog
   await page.getByLabel("Source").fill("Referral");
   await page.getByLabel("Salary from").fill("50k");
   await page.getByLabel("Salary to").fill("60000");
@@ -39,6 +40,8 @@ test("track an application end to end", async ({ page }) => {
   await page.getByRole("button", { name: "Add note" }).click();
   await expect(page.locator(".timeline")).toContainText("Recruiter call went well");
   await expect(page.locator(".timeline")).toContainText("Added as Applied");
+  await expect(page.locator(".timeline")).toContainText("Mar 3, 2025");
+  await expect(page.locator(".facts")).toContainText("Added Mar 3, 2025");
 
   // Edit the note and a contact in place
   await page.locator(".timeline").getByText("Edit note").click();
@@ -78,6 +81,16 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.locator(".card")).toHaveCount(0);
   await filter.fill("referral");
   await expect(page.locator(".card")).toHaveCount(1);
+
+  // A wrong move is taken back from the timeline, so the funnel never counts it
+  await page.getByLabel("Move Acme Robotics to stage").selectOption("offer");
+  await expect(page.getByRole("region", { name: "Offer" })).toContainText("Acme Robotics", { timeout: 10_000 });
+  await page.goto(appPath);
+  await page.locator(".timeline").getByText("Edit move to Offer").click();
+  await expect(page.getByText("Removing it moves the application back to Interview.")).toBeVisible();
+  await page.getByRole("button", { name: "Remove this change" }).click();
+  await expect(page.locator(".timeline")).not.toContainText("Offer");
+  await expect(page.locator(".facts")).toContainText("Interview");
 
   // Keyword gap report
   await page.getByRole("link", { name: "Resume tailor" }).click();

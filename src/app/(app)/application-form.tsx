@@ -29,6 +29,17 @@ export function ApplicationForm({ app }: { app?: Application }) {
             ))}
           </select>
         </label>
+        {!app && (
+          <div style={{ display: "grid", gap: 4 }}>
+            <label>
+              Date
+              <input name="stageDate" type="date" aria-describedby="stage-date-hint" />
+            </label>
+            <span id="stage-date-hint" className="small muted">
+              When it reached this stage, if not today.
+            </span>
+          </div>
+        )}
         <label>
           Source
           <input name="source" defaultValue={app?.source} placeholder="Referral, LinkedIn, career fair…" maxLength={80} list="sources" />
