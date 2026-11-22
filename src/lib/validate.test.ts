@@ -25,6 +25,10 @@ describe("parseApplication", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain(msg);
   });
+  it("accepts stage and work mode as the app labels them", () => {
+    // A spreadsheet written by hand says "Applied", as the board does.
+    expect(parseApplication({ company: "A", role: "B", stage: "Applied", workMode: "Remote" })).toMatchObject({ ok: true, value: { stage: "applied", workMode: "remote" } });
+  });
   it("takes numbers from JSON as text", () => {
     expect(parseApplication({ company: 3, role: "B", salaryMin: 85000 })).toMatchObject({ ok: true, value: { company: "3", salaryMin: 85000 } });
   });

@@ -102,7 +102,7 @@ function parseApplicationFields(raw: Raw): Result<ApplicationInput> {
   if (!company) return { ok: false, error: "Company is required." };
   if (!role) return { ok: false, error: "Role is required." };
 
-  const stage = str(raw, "stage") || "wishlist";
+  const stage = str(raw, "stage").toLowerCase() || "wishlist";
   if (!isStage(stage)) return { ok: false, error: `Unknown stage "${stage}".` };
 
   const url = str(raw, "url", 2000);
@@ -117,7 +117,7 @@ function parseApplicationFields(raw: Raw): Result<ApplicationInput> {
   const currency = (str(raw, "currency", 10) || "USD").toUpperCase();
   if (!/^[A-Z]{3}$/.test(currency)) return { ok: false, error: "Currency must be a 3-letter code like USD or EUR." };
 
-  const workMode = str(raw, "workMode") || "onsite";
+  const workMode = str(raw, "workMode").toLowerCase() || "onsite";
   if (!(WORK_MODES as readonly string[]).includes(workMode)) return { ok: false, error: "Work mode must be onsite, hybrid or remote." };
 
   const nextStepDue = str(raw, "nextStepDue", 40) || null;
