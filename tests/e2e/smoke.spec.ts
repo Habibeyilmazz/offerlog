@@ -2,8 +2,13 @@ import { expect, test } from "@playwright/test";
 import { E2E_PASSWORD } from "../../playwright.config.ts";
 
 test("track an application end to end", async ({ page }) => {
-  await page.goto("/");
+  const first = await page.goto("/");
   await expect(page).toHaveURL(/\/login$/);
+  // Not frameable (clickjacking) and no MIME sniffing.
+  const sent = first!.headers();
+  expect(sent["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(sent["x-frame-options"]).toBe("DENY");
+  expect(sent["x-content-type-options"]).toBe("nosniff");
 
   await page.getByLabel("Password").fill("not-the-password");
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -89,6 +94,7 @@ test("track an application end to end", async ({ page }) => {
   // Export includes the record
   const res = await page.request.get("/api/export?format=json");
   expect(res.status()).toBe(200);
+  expect(res.headers()["cache-control"]).toBe("no-store"); // a full personal backup must not sit in a proxy cache
   const dump = await res.json();
   expect(dump.applications[0]).toMatchObject({ company: "Acme Robotics", stage: "interview" });
 
