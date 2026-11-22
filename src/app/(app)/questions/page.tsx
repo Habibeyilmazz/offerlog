@@ -56,7 +56,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
                         <summary>
                           <span style={{ fontWeight: 600 }}>{q.question}</span> <StagePill stage={isStage(q.stage) ? q.stage : "interview"} />
                         </summary>
-                        {q.answer && <p style={{ whiteSpace: "pre-wrap", marginBottom: 14 }}>{q.answer}</p>}
+                        {q.answer && <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", marginBottom: 14 }}>{q.answer}</p>}
                         <QuestionForm q={q} />
                         <form style={{ marginTop: 10 }}>
                           <input type="hidden" name="id" value={q.id} />

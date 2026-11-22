@@ -718,7 +718,7 @@ ul.upnext {
 }
 @media (max-width: 1000px) {
   .detail {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -744,6 +744,8 @@ ul.upnext {
 }
 .nextstep .what {
   flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .timeline {
@@ -805,6 +807,7 @@ ul.upnext {
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
+  overflow-wrap: anywhere;
 }
 
 .prep-stage + .prep-stage {
@@ -815,6 +818,7 @@ ul.upnext {
 .prep-stage details ul {
   padding-left: 18px;
   margin: 8px 0;
+  overflow-wrap: anywhere;
 }
 .list.prep-notes {
   margin: 10px 0;
@@ -879,6 +883,7 @@ details.edit[open] > summary {
 details > summary {
   cursor: pointer;
   font-weight: 650;
+  overflow-wrap: anywhere;
 }
 details[open] > summary {
   margin-bottom: 14px;

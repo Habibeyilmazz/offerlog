@@ -154,6 +154,8 @@ test("track an application end to end", async ({ page }) => {
   await page.getByRole("link", { name: "Question bank" }).click();
   const add = page.getByRole("region", { name: "Add a question" });
   await add.getByLabel("Question").fill("Walk me through a project you are proud of");
+  // A long link has no break points; the page must still fit a phone (checked with the axe scans below)
+  await add.getByLabel("Answer").fill(`Course planner, see https://example.com/p?id=${"x7Kq2Lm9".repeat(30)}`);
   await add.getByLabel("Category").selectOption("behavioral");
   await add.getByLabel("Asked at").selectOption("interview");
   await add.getByRole("button", { name: "Add question" }).click();
@@ -230,8 +232,8 @@ test("track an application end to end", async ({ page }) => {
     name: "apps.csv",
     mimeType: "text/csv",
     buffer: Buffer.from(
-      `company,role,stage,created_at\nBramble Bank,Graduate Engineer,applied,\n${"Unbrokenname".repeat(12)},Dev,wishlist,\n` +
-        "Old Mill Labs,Tester,applied,2025-01-10\nQuarry Systems,Developer,screening,2025-02-01\n",
+      `company,role,stage,created_at,next_step\nBramble Bank,Graduate Engineer,applied,,\n${"Unbrokenname".repeat(12)},Dev,wishlist,,Read https://example.com/jobs?ref=${"x7Kq2Lm9".repeat(30)}\n` +
+        "Old Mill Labs,Tester,applied,2025-01-10,\nQuarry Systems,Developer,screening,2025-02-01,\n",
     ),
   });
   await page.getByRole("button", { name: "Import file" }).click();
@@ -248,16 +250,18 @@ test("track an application end to end", async ({ page }) => {
   // A long unbroken name wraps inside its card instead of sliding under the other columns
   await page.getByRole("link", { name: /^Unbrokenname/ }).click({ timeout: 5_000 });
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Unbrokenname");
+  const unbroken = new URL(page.url()).pathname;
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("link", { name: "Board" }).first().click();
 
   // No axe-core violations on any page with data on it, in light and dark, on desktop and phone widths
-  for (const path of ["/", appPath, "/applications/new", "/tailor", "/analytics", "/questions", "/data", "/no-such-page"]) {
+  for (const path of ["/", appPath, unbroken, "/applications/new", "/tailor", "/analytics", "/questions", "/data", "/no-such-page"]) {
     for (const [colorScheme, width] of [["light", 1280], ["dark", 1280], ["light", 390]] as const) {
       await page.setViewportSize({ width, height: 800 });
       await page.emulateMedia({ colorScheme });
       await page.goto(path);
       expect(await axeViolations(page), `${path} ${colorScheme} ${width}px`).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} scrolls sideways at ${width}px`).toBeLessThanOrEqual(width);
     }
   }
   await page.setViewportSize({ width: 1280, height: 720 });
