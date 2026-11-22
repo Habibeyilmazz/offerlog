@@ -27,3 +27,11 @@ export class FailureLimiter {
     this.hits.delete(key);
   }
 }
+
+/**
+ * Rate-limit key for a request. A reverse proxy appends the address it saw to X-Forwarded-For, so the last hop is
+ * the only one the client cannot choose; earlier hops are whatever the client sent.
+ */
+export function clientKey(forwardedFor: string | null): string {
+  return forwardedFor?.split(",").at(-1)?.trim() || "local";
+}

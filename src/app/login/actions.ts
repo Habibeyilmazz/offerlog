@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyPassword } from "@/lib/password.ts";
-import { FailureLimiter } from "@/lib/rate-limit.ts";
+import { clientKey, FailureLimiter } from "@/lib/rate-limit.ts";
 import { startSession } from "@/lib/session.ts";
 
 // shortcut: in-memory limits reset on restart and are per process; fine for a single-user, single-instance app.
@@ -14,7 +14,7 @@ export async function login(_prev: { error?: string }, form: FormData): Promise<
   const stored = process.env.OFFERLOG_PASSWORD_HASH;
   if (!stored) return { error: "Login is not configured. Set OFFERLOG_PASSWORD_HASH (see README) and restart." };
 
-  const client = (await headers()).get("x-forwarded-for")?.split(",")[0].trim() || "local";
+  const client = clientKey((await headers()).get("x-forwarded-for"));
   const wait = Math.max(perClient.blockedFor(client), everyone.blockedFor("*"));
   if (wait > 0) return { error: `Too many failed attempts. Try again in ${Math.ceil(wait / 60_000)} minutes.` };
 

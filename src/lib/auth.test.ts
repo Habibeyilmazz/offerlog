@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hashPassword, verifyPassword } from "./password.ts";
-import { FailureLimiter } from "./rate-limit.ts";
+import { clientKey, FailureLimiter } from "./rate-limit.ts";
 
 describe("password", () => {
   it("verifies the right password only", () => {
@@ -36,5 +36,18 @@ describe("FailureLimiter", () => {
     expect(l.blockedFor("k", 250)).toBe(50);
     l.reset("k");
     expect(l.blockedFor("k", 250)).toBe(0);
+  });
+});
+
+describe("clientKey", () => {
+  it("uses the hop the nearest proxy added, not the client-supplied first entry", () => {
+    expect(clientKey("6.6.6.6, 203.0.113.7")).toBe("203.0.113.7");
+    expect(clientKey("1.1.1.1, 2.2.2.2, 203.0.113.7")).toBe("203.0.113.7");
+    expect(clientKey("203.0.113.7")).toBe("203.0.113.7");
+  });
+  it("falls back to one shared key without the header", () => {
+    expect(clientKey(null)).toBe("local");
+    expect(clientKey("")).toBe("local");
+    expect(clientKey(" , ")).toBe("local");
   });
 });
