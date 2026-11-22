@@ -3,7 +3,8 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
-RUN npm ci
+# better-sqlite3 ships prebuilt binaries; skipping install scripts avoids a node-gyp build that needs python and make.
+RUN npm ci --ignore-scripts
 COPY . .
 RUN NEXT_OUTPUT=standalone npm run build
 

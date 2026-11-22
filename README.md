@@ -14,7 +14,7 @@ Needs Node.js 22 or newer.
 ```sh
 git clone https://github.com/Habibeyilmazz/offerlog.git
 cd offerlog
-npm ci
+npm ci --ignore-scripts                       # SQLite driver ships prebuilt binaries; no compiler needed
 node scripts/hash-password.ts >> .env.local   # asks for a password and saves only its hash
 npm run build
 npm start                                     # http://localhost:4220
