@@ -59,6 +59,14 @@ export function exportJson(d: Db) {
   };
 }
 
+// A wrong file can add tens of thousands of rows and there is no bulk delete; the board was measured at 2,000 cards.
+const MAX_IMPORT_APPLICATIONS = 2000;
+
+function checkCount(n: number): void {
+  if (n > MAX_IMPORT_APPLICATIONS)
+    throw new Error(`This file has ${n.toLocaleString("en")} applications; one import takes at most ${MAX_IMPORT_APPLICATIONS.toLocaleString("en")}. Split it into smaller files.`);
+}
+
 export interface ImportResult {
   applications: number;
   questions: number;
@@ -140,6 +148,7 @@ export function importJson(d: Db, data: unknown, now = new Date().toISOString())
     throw new Error("This is not an offerlog JSON export.");
   const doc = data as Record<string, unknown>;
   const apps = asList(doc.applications, "applications");
+  checkCount(apps.length);
   const qs = asList(doc.questions, "questions");
   d.transaction((tx) => {
     apps.forEach((raw, i) => labelled(`Application ${i + 1}`, () => insertApplication(tx as unknown as Db, raw, `Application ${i + 1}`, now)));
@@ -166,6 +175,7 @@ export function importCsv(d: Db, text: string, now = new Date().toISOString()): 
     return CSV_COLUMNS.find(([col, key]) => col === norm || key.toLowerCase() === norm)?.[1];
   });
   if (!keys.includes("company") || !keys.includes("role")) throw new Error("The CSV needs at least company and role columns.");
+  checkCount(rows.length);
   d.transaction((tx) => {
     rows.forEach((cells, i) => {
       const raw: Record<string, unknown> = {};

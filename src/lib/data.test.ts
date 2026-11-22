@@ -229,6 +229,15 @@ describe("import/export", () => {
     expect(listEvents(d).map((e) => e.at).sort()).toEqual([local(5), local(6)]);
     expect(getApplication(d, 2)!.notes[0].createdAt).toBe(local(7));
   });
+  it("refuses more than 2,000 applications in one file, which there is no bulk delete to undo", () => {
+    // A wrong 5 MB CSV once added 160,000 applications and the board no longer loaded.
+    const rows = (n: number) => "company,role\n" + "A,B\n".repeat(n);
+    expect(importCsv(d, rows(2000)).applications).toBe(2000);
+    expect(() => importCsv(d, rows(2001))).toThrow(/2,001 applications; one import takes at most 2,000/);
+    const apps = Array.from({ length: 2001 }, () => ({ company: "A", role: "B" }));
+    expect(() => importJson(d, { app: "offerlog", applications: apps })).toThrow(/at most 2,000/);
+    expect(listApplications(d)).toHaveLength(2000);
+  });
   it("writes nothing when any row is invalid", () => {
     expect(() => importCsv(d, "company,role,stage\nA,B,applied\nC,D,hired\n")).toThrow(/Row 3/);
     expect(exportJson(d).applications).toEqual([]);
