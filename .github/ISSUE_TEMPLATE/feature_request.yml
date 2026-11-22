@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest something offerlog should do.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Check the Roadmap section of the README first; it lists what is planned but not built.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do in your job search that offerlog makes hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you would like
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today

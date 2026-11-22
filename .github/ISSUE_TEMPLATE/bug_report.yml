@@ -1,0 +1,47 @@
+name: Bug report
+description: Something in offerlog does not work as described in the README.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste real application data, resumes, contacts or your password hash. Use the demo data or a made-up example.
+        Security problems: see SECURITY.md instead of opening a public issue.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Load demo data
+        2. Open an application
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: run
+    attributes:
+      label: How do you run it
+      options:
+        - npm start
+        - npm run dev
+        - Docker compose
+        - Other (say below)
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: offerlog commit (git rev-parse --short HEAD), Node version, browser.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server output or browser console
+      render: text
