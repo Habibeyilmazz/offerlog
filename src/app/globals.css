@@ -380,7 +380,7 @@ textarea {
   resize: vertical;
 }
 input[type="file"] {
-  padding: 5px 6px;
+  padding: 3px 6px;
   color: var(--muted);
 }
 input[type="file"]::file-selector-button {

@@ -14,7 +14,12 @@ interface Job {
 const RESUME_KEY = "offerlog.resume";
 
 function Chips({ items, kind }: { items: TermHit[]; kind: "hit" | "miss" | "plain" }) {
-  if (items.length === 0) return <p className="muted small">None</p>;
+  if (items.length === 0)
+    return (
+      <p className="muted small" style={{ marginTop: 6 }}>
+        None
+      </p>
+    );
   return (
     <ul className="chips">
       {items.map((t) => (
