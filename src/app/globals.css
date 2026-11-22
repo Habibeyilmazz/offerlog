@@ -1,24 +1,81 @@
 :root {
   --canvas: #eceff3;
   --surface: #ffffff;
+  --sunken: #e2e7ed;
   --ink: #18212d;
   --muted: #586374;
   --line: #d5dbe3;
+  --line-strong: #b7c0cc;
   --signal: #f2c230;
-  --danger: #b5483b;
+  --danger: #a33d31;
   --focus: #2f62c9;
+  --chrome: #18212d;
+
+  --due-bg: #fbefc4;
+  --due-fg: #6b5100;
+  --late-bg: #f6d9d5;
+  --late-fg: #8c2d22;
+  --next-bg: #fdf6dc;
+  --next-line: #efdc95;
+  --hit-bg: #eef7ec;
+  --hit-line: #b9d8b2;
+  --hit-fg: #2a5f21;
+  --miss-bg: #fbeeec;
+  --miss-line: #e3b3ac;
+  --miss-fg: #7d2a20;
+  /* How much stage colour goes into a pill's background, and what its text is mixed with. */
+  --pill-tint: 14%;
+  --pill-ink: black;
+  --pill-text: 72%;
 
   --st-wishlist: #8a7fb5;
   --st-applied: #3a6ea5;
   --st-screening: #23867a;
   --st-interview: #c98a22;
-  --st-offer: #3c8d2f;
+  --st-offer: #357f2a;
   --st-rejected: #b5483b;
   --st-ghosted: #8f99a6;
 
   --radius: 6px;
   --space: 16px;
   color-scheme: light;
+}
+
+/* Dark theme follows the system setting. Stage colours stay the same so they mean the same thing in both. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #121820;
+    --surface: #1a222d;
+    --sunken: #161d26;
+    --ink: #e3e8ee;
+    --muted: #9ba7b6;
+    --line: #2d3946;
+    --line-strong: #4a5868;
+    --danger: #ef8a7c;
+    --focus: #8fb2ff;
+    --chrome: #0e131a;
+
+    --due-bg: #3a3014;
+    --due-fg: #f1d37e;
+    --late-bg: #47211c;
+    --late-fg: #f6aca1;
+    --next-bg: #262212;
+    --next-line: #514519;
+    --hit-bg: #1c2f1a;
+    --hit-line: #31512c;
+    --hit-fg: #a9d99f;
+    --miss-bg: #351c19;
+    --miss-line: #5f2f29;
+    --miss-fg: #f3aca2;
+    --pill-tint: 22%;
+    --pill-ink: white;
+    --pill-text: 58%;
+
+    --st-wishlist: #9a90c4;
+    --st-applied: #4a80b8;
+    --st-ghosted: #7d8794;
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -38,10 +95,8 @@ body {
   line-height: 1.5;
 }
 
-/* Tabular figures only where numbers line up; this face also spaces punctuation under tnum. */
-td.num,
-.stat strong,
-.bar,
+/* Tabular figures only for bare integers: this face spaces "." and "%" wide under tnum, so "6.5 d" fell apart. */
+.funnel-row .n,
 .week,
 .count {
   font-variant-numeric: tabular-nums;
@@ -106,7 +161,7 @@ p {
 }
 
 .sidebar {
-  background: var(--ink);
+  background: var(--chrome);
   color: #e8ecf1;
   padding: 24px 12px;
   display: flex;
@@ -150,6 +205,28 @@ p {
 .sidebar .linklike {
   color: #9aa6b5;
   padding: 8px 12px;
+}
+.sidebar .linklike:hover {
+  color: #fff;
+}
+/* The page focus colour is too dark on the sidebar. */
+.sidebar :focus-visible {
+  outline-color: var(--signal);
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 10;
+  background: var(--signal);
+  color: #18212d;
+  font-weight: 650;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+}
+.skip-link:focus {
+  top: 12px;
 }
 
 main {
@@ -206,7 +283,7 @@ main {
   gap: 6px;
   border: 1px solid var(--ink);
   background: var(--ink);
-  color: #fff;
+  color: var(--surface);
   font: inherit;
   font-weight: 600;
   padding: 7px 14px;
@@ -216,7 +293,7 @@ main {
   white-space: nowrap;
 }
 .btn:hover {
-  background: #2b3748;
+  background: color-mix(in srgb, var(--ink) 85%, var(--canvas));
 }
 .btn.secondary {
   background: var(--surface);
@@ -225,8 +302,18 @@ main {
 }
 .btn.secondary:hover {
   border-color: var(--muted);
+  background: var(--surface);
 }
-.btn:disabled {
+.btn.danger {
+  background: #b5483b;
+  border-color: #b5483b;
+  color: #fff;
+}
+.btn.danger:hover {
+  background: #9c3c31;
+}
+.btn:disabled,
+.linklike:disabled {
   opacity: 0.6;
   cursor: progress;
 }
@@ -272,7 +359,7 @@ textarea {
 input:hover,
 select:hover,
 textarea:hover {
-  border-color: #b7c0cc;
+  border-color: var(--line-strong);
 }
 
 .form-grid {
@@ -340,8 +427,8 @@ textarea:hover {
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--stage) 14%, white);
-  color: color-mix(in srgb, var(--stage) 75%, black);
+  background: color-mix(in srgb, var(--stage) var(--pill-tint), var(--surface));
+  color: color-mix(in srgb, var(--stage) var(--pill-text), var(--pill-ink));
 }
 
 .due {
@@ -350,16 +437,16 @@ textarea:hover {
   font-weight: 650;
   padding: 1px 7px;
   border-radius: 4px;
-  background: #fbefc4;
-  color: #6b5100;
+  background: var(--due-bg);
+  color: var(--due-fg);
 }
 .due.overdue {
-  background: #f6d9d5;
-  color: #8c2d22;
+  background: var(--late-bg);
+  color: var(--late-fg);
 }
 .due.today {
   background: var(--signal);
-  color: var(--ink);
+  color: #18212d;
 }
 
 /* ---------- up next strip ---------- */
@@ -414,7 +501,7 @@ textarea:hover {
 }
 
 .column {
-  background: #e2e7ed;
+  background: var(--sunken);
   border-radius: var(--radius);
   padding: 8px;
   min-height: 160px;
@@ -422,7 +509,7 @@ textarea:hover {
   transition: background 0.12s;
 }
 .column.drop-target {
-  background: color-mix(in srgb, var(--stage) 16%, #e2e7ed);
+  background: color-mix(in srgb, var(--stage) 16%, var(--sunken));
 }
 .column-head {
   display: flex;
@@ -514,9 +601,12 @@ textarea:hover {
   flex-wrap: wrap;
   padding: 12px 14px;
   border-radius: var(--radius);
-  background: #fdf6dc;
-  border: 1px solid #efdc95;
+  background: var(--next-bg);
+  border: 1px solid var(--next-line);
   margin-bottom: 16px;
+}
+.nextstep .what {
+  flex: 1 1 14rem;
 }
 
 .timeline {
@@ -585,9 +675,68 @@ textarea:hover {
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
-.prep-stage ul {
+.prep-stage details ul {
   padding-left: 18px;
   margin: 8px 0;
+}
+.list.prep-notes {
+  margin: 10px 0;
+}
+.list.contacts li,
+.list.prep-notes li {
+  display: block;
+}
+.list.contacts li + li,
+.list.prep-notes li + li {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  overflow-wrap: anywhere;
+}
+
+/* In-place editing: a quiet "Edit" under each note or contact that opens its own form. */
+.note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+details.edit > summary {
+  display: inline-block;
+  list-style: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
+details.edit > summary::-webkit-details-marker {
+  display: none;
+}
+details.edit > summary:hover {
+  color: var(--ink);
+}
+details.edit[open] > summary {
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.edit-form {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 4px;
+}
+.edit-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 details > summary {
@@ -640,27 +789,25 @@ th.num {
 }
 .funnel-row {
   display: grid;
-  grid-template-columns: 90px minmax(0, 1fr) 64px;
+  grid-template-columns: 84px 2.5ch minmax(0, 1fr) 40px;
   gap: 10px;
   align-items: center;
   font-size: 0.9rem;
 }
 .bar-track {
-  background: #edf0f4;
+  background: var(--sunken);
   border-radius: 4px;
-  height: 26px;
+  height: 22px;
   overflow: hidden;
 }
 .bar {
   height: 100%;
   background: var(--stage);
-  display: flex;
-  align-items: center;
-  padding-left: 8px;
-  color: #fff;
+  min-width: 3px;
+}
+.funnel-row .n {
   font-weight: 650;
-  font-size: 0.85rem;
-  min-width: 26px;
+  text-align: right;
 }
 
 .weeks {
@@ -680,6 +827,7 @@ th.num {
   text-align: center;
   font-size: 0.75rem;
   color: var(--muted);
+  white-space: nowrap;
 }
 .week .col {
   align-self: end;
@@ -712,10 +860,10 @@ th.num {
 }
 
 .stat-row {
-  display: flex;
-  gap: 28px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, max-content));
+  gap: 14px 36px;
+  margin-bottom: 20px;
 }
 .stat strong {
   display: block;
@@ -760,14 +908,14 @@ th.num {
   background: var(--surface);
 }
 .chip.miss {
-  border-color: #e3b3ac;
-  background: #fbeeec;
-  color: #7d2a20;
+  border-color: var(--miss-line);
+  background: var(--miss-bg);
+  color: var(--miss-fg);
 }
 .chip.hit {
-  border-color: #b9d8b2;
-  background: #eef7ec;
-  color: #2a5f21;
+  border-color: var(--hit-line);
+  background: var(--hit-bg);
+  color: var(--hit-fg);
 }
 .chip small {
   opacity: 0.7;
@@ -776,7 +924,8 @@ th.num {
 
 .coverage {
   height: 10px;
-  background: #f0d6d2;
+  background: var(--miss-bg);
+  border: 1px solid var(--miss-line);
   border-radius: 99px;
   overflow: hidden;
   margin: 8px 0 4px;
@@ -788,7 +937,7 @@ th.num {
 
 .ai-output {
   white-space: pre-wrap;
-  background: #f6f8fa;
+  background: var(--sunken);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 14px;
@@ -810,12 +959,53 @@ th.num {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.88em;
+}
+
+main:focus {
+  outline: none;
+}
+
+.state-panel {
+  max-width: 560px;
+  display: grid;
+  gap: 10px;
+}
+.state-panel h1 {
+  font-size: 1.4rem;
+}
+
+/* Phone layout for components defined above; kept last so it wins over their base rules. */
+@media (max-width: 760px) {
+  /* One readable column at a time, with the next one peeking in; swipe snaps column by column. */
+  .board {
+    grid-auto-columns: 78%;
+    scroll-snap-type: x mandatory;
+  }
+  .column {
+    scroll-snap-align: start;
+  }
+  .board-tools {
+    max-width: none;
+  }
+  .stat-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .week {
+    font-size: 0.68rem;
+  }
+  .weeks {
+    gap: 4px;
+  }
 }

@@ -7,6 +7,8 @@ import { isStage, PREP_STAGES, QUESTION_CATEGORIES, STAGE_LABELS } from "@/lib/s
 import { StagePill } from "../stage-pill.tsx";
 import { QuestionForm } from "./question-form.tsx";
 
+export const metadata = { title: "Question bank" };
+
 export default async function QuestionsPage({ searchParams }: { searchParams: Promise<{ stage?: string }> }) {
   await requireUser();
   const { stage } = await searchParams;

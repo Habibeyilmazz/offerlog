@@ -2,11 +2,13 @@ import { setWeeklyGoal } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
 import { funnel, median, replies, responseBySource, weeklyApplied } from "@/lib/analytics.ts";
 import { getWeeklyGoal, listApplications, listEvents } from "@/lib/data.ts";
-import { pct } from "@/lib/format.ts";
+import { pct, plural } from "@/lib/format.ts";
 import { requireUser } from "@/lib/session.ts";
 import { STAGE_LABELS } from "@/lib/stages.ts";
 
 const days = (d: number | null) => (d == null ? "–" : `${Math.round(d * 10) / 10} d`);
+
+export const metadata = { title: "Analytics" };
 
 export default async function AnalyticsPage() {
   await requireUser();
@@ -35,7 +37,7 @@ export default async function AnalyticsPage() {
       <div className="stat-row">
         <div className="stat">
           <strong>{applied}</strong>
-          <span>applications sent</span>
+          <span>{plural(applied, "application", false)} sent</span>
         </div>
         <div className="stat">
           <strong>{pct(reps.length ? replied / reps.length : null)}</strong>
@@ -47,7 +49,7 @@ export default async function AnalyticsPage() {
         </div>
         <div className="stat">
           <strong>{rows[3].reached}</strong>
-          <span>offers</span>
+          <span>{plural(rows[3].reached, "offer", false)}</span>
         </div>
       </div>
 
@@ -58,10 +60,9 @@ export default async function AnalyticsPage() {
             {rows.map((r) => (
               <div key={r.stage} className="funnel-row" style={{ "--stage": `var(--st-${r.stage})` } as React.CSSProperties}>
                 <span>{STAGE_LABELS[r.stage]}</span>
-                <div className="bar-track">
-                  <div className="bar" style={{ width: `${applied ? (r.reached / applied) * 100 : 0}%` }}>
-                    {r.reached}
-                  </div>
+                <span className="n">{r.reached}</span>
+                <div className="bar-track" aria-hidden="true">
+                  <div className="bar" style={{ width: `${applied ? (r.reached / applied) * 100 : 0}%` }} />
                 </div>
                 <span className="small muted" title="Conversion from the previous stage">
                   {r.conversion == null ? "" : pct(r.conversion)}

@@ -4,6 +4,8 @@ import { listApplications } from "@/lib/data.ts";
 import { requireUser } from "@/lib/session.ts";
 import { Tailor } from "./tailor.tsx";
 
+export const metadata = { title: "Resume tailor" };
+
 export default async function TailorPage({ searchParams }: { searchParams: Promise<{ app?: string }> }) {
   await requireUser();
   const jobs = listApplications(db())

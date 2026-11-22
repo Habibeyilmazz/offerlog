@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/session.ts";
 import { ApplicationForm } from "../../application-form.tsx";
 
+export const metadata = { title: "Add application" };
+
 export default async function NewApplicationPage() {
   await requireUser();
   return (

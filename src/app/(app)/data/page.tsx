@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/session.ts";
 import { ImportForm } from "./import-form.tsx";
 
+export const metadata = { title: "Import & export" };
+
 export default async function DataPage() {
   await requireUser();
   return (

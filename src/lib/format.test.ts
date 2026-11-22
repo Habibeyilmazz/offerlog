@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { due, money, place } from "./format.ts";
+import { due, money, place, plural } from "./format.ts";
 
 describe("format", () => {
   it("formats salary ranges compactly", () => {
     expect(money(38000, 46000, "EUR")).toBe("€38K–€46K");
     expect(money(null, 90000, "USD")).toBe("$90K");
     expect(money(null, null, "USD")).toBe("");
+  });
+  it("pluralises counts", () => {
+    expect(plural(1, "application")).toBe("1 application");
+    expect(plural(0, "question")).toBe("0 questions");
+    expect(plural(3, "offer", false)).toBe("offers");
   });
   it("describes the place without repeating remote", () => {
     expect(place("Remote (EU)", "remote")).toBe("Remote (EU)");

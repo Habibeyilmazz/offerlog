@@ -31,3 +31,9 @@ export function place(location: string, workMode: string): string {
   const mode = workMode === "onsite" || (workMode === "remote" && /remote/i.test(location)) ? "" : workMode;
   return [location, mode].filter(Boolean).join(", ");
 }
+
+/** plural(1, "offer") is "1 offer", plural(3, "offer") is "3 offers"; withCount false drops the number. */
+export function plural(n: number, word: string, withCount = true): string {
+  const w = n === 1 ? word : `${word}s`;
+  return withCount ? `${n} ${w}` : w;
+}

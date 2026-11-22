@@ -81,7 +81,7 @@ test("track an application end to end", async ({ page }) => {
     buffer: Buffer.from("company,role,stage\nBramble Bank,Graduate Engineer,applied\n"),
   });
   await page.getByRole("button", { name: "Import file" }).click();
-  await expect(page.getByRole("status")).toHaveText("Imported 1 applications.");
+  await expect(page.getByRole("status")).toHaveText("Imported 1 application.");
   await page.getByRole("link", { name: "Board" }).first().click();
   await expect(page.getByRole("region", { name: "Applied" })).toContainText("Bramble Bank");
 

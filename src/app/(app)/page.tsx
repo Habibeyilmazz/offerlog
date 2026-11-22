@@ -7,6 +7,8 @@ import { requireUser } from "@/lib/session.ts";
 import { STAGES, type Stage } from "@/lib/stages.ts";
 import { Board, type CardData } from "./board.tsx";
 
+export const metadata = { title: "Board" };
+
 export default async function BoardPage() {
   await requireUser();
   const apps = listApplications(db());

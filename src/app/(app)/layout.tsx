@@ -8,6 +8,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   await requireUser();
   return (
     <div className="shell">
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       <aside className="sidebar">
         <div className="brand">
           offer<span>log</span>
@@ -17,7 +20,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <button className="linklike">Sign out</button>
         </form>
       </aside>
-      <main>{children}</main>
+      <main id="main" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }
