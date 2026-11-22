@@ -4,7 +4,28 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, launch round. Most of the launch checklist (pitch, GIF, quickstart, comparison, roadmap, CONTRIBUTING, SECURITY, issue templates, repo description and topics) was already in place, so this round checked it against the running app instead of rewriting it.
+Latest, feature round: bring your spreadsheet. The target user almost always starts with a tracking sheet of their own, and the CSV import only read offerlog's own column names: a sheet with `Company Name, Position, Status, Date Applied, ...` was refused with "The CSV needs at least company and role columns" (reproduced in the running app), and a sheet that got past that was refused at the first `Interviewing` or `No response`. Unknown columns were dropped without a word.
+
+### Added
+
+- CSV import reads common spreadsheet column names (`CSV_ALIASES` in `src/lib/transfer.ts`): Company name, Employer, Position, Job title, Status, Link, Job URL, City, Work type, Found via, Next action, Due date, Date applied, Job description, Notes and a few more, compared ignoring case, spaces and punctuation. When two columns mean the same field, the first one wins.
+- Status words a sheet uses map to stages (`STAGE_WORDS`): Saved and Bookmarked to wishlist, Submitted to applied, Phone screen and Online assessment to screening, Interviewing and Final round to interview, Offer received to offer, Not selected to rejected, No response to ghosted, and others. Work modes On-site, In office and Fully remote are read too.
+- A Notes cell becomes a timeline note dated with the row's date applied, so an old application still shows as waiting on a reply instead of counting the note as news from today.
+- A due date may be written as a spreadsheet writes it (`11/30/2026`), like `created_at`; impossible dates are refused by row.
+- The import result names columns that were not imported (`Imported 4 applications. Not imported: the "Salary" column.`).
+
+### Changed
+
+- An unknown stage error lists the accepted stages. A note longer than 20,000 characters in a CSV names its row.
+- Import & export page text, README and `docs/screenshots/data.png` (from the running app) describe the spreadsheet import. The smoke test imports a sheet with its own headers and checks the message and the card.
+
+### Notes for the next agent
+
+- Not done: a free-text Salary column (`40k-45k`, `$90,000`, `DOE`) is named as not imported rather than parsed; parsing would need a currency guess for `$` and a rule for text like "Competitive". JSON import is unchanged (strict). No Huntr or Teal export formats were added: I had no real sample files, and guessing their columns would be dishonest.
+- Review: Codex was over its usage limit (until 09:32 local); `/code-review` picked another repository on this machine because the agent's working directory is not this repo, so the diff was reviewed by hand. That review dropped a `Follow up` alias (many sheets keep a date or "Yes" there) and added the due-date parsing.
+- Still open from earlier rounds: the 14-day follow-up threshold is a constant; the AI rewrite is only tested with a mocked client; the CSV byte order mark is not checked in Excel itself; the base image is not digest-pinned; the social preview needs a manual upload.
+
+Earlier, launch round. Most of the launch checklist (pitch, GIF, quickstart, comparison, roadmap, CONTRIBUTING, SECURITY, issue templates, repo description and topics) was already in place, so this round checked it against the running app instead of rewriting it.
 
 ### Changed
 
