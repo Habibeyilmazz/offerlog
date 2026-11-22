@@ -6,6 +6,7 @@ describe("format", () => {
     expect(money(38000, 46000, "EUR")).toBe("€38K–€46K");
     expect(money(null, 90000, "USD")).toBe("$90K");
     expect(money(null, null, "USD")).toBe("");
+    expect(money(1500, null, "EUR")).toBe("€1.5K"); // cached formatters stay per currency
   });
   it("filters without caring about case or accents", () => {
     // Lower-casing alone turns "İstanbul" into "i̇stanbul", which "istanbul" does not find.

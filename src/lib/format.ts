@@ -1,6 +1,13 @@
+// Building a NumberFormat takes about 20 µs; a 2,000-card board spent 40 ms of each render on it.
+const moneyFormats = new Map<string, Intl.NumberFormat>();
+
 export function money(min: number | null, max: number | null, currency: string): string {
   if (min == null && max == null) return "";
-  const f = new Intl.NumberFormat("en", { style: "currency", currency, notation: "compact", minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  let f = moneyFormats.get(currency);
+  if (!f) {
+    f = new Intl.NumberFormat("en", { style: "currency", currency, notation: "compact", minimumFractionDigits: 0, maximumFractionDigits: 1 });
+    moneyFormats.set(currency, f);
+  }
   if (min != null && max != null && min !== max) return `${f.format(min)}–${f.format(max)}`;
   return f.format((min ?? max) as number);
 }
