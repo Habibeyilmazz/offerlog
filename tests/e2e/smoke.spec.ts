@@ -1,6 +1,18 @@
 import { readFile } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { E2E_PASSWORD } from "../../playwright.config.ts";
+
+const AXE = await readFile("node_modules/axe-core/axe.min.js", "utf8");
+
+/** WCAG 2.2 AA and best-practice violations axe-core finds on the current page, as "rule(count)". */
+async function axeViolations(page: Page): Promise<string[]> {
+  await page.addScriptTag({ content: AXE });
+  return page.evaluate(async () => {
+    const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
+    const { violations } = await (window as unknown as { axe: { run: (c: Document, o: object) => Promise<{ violations: { id: string; nodes: unknown[] }[] }> } }).axe.run(document, { runOnly: tags });
+    return violations.map((v) => `${v.id}(${v.nodes.length})`);
+  });
+}
 
 test("track an application end to end", async ({ page }) => {
   const first = await page.goto("/");
@@ -202,10 +214,23 @@ test("track an application end to end", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("link", { name: "Board" }).first().click();
 
+  // No axe-core violations on any page with data on it, in light and dark, on desktop and phone widths
+  for (const path of ["/", appPath, "/applications/new", "/tailor", "/analytics", "/questions", "/data"]) {
+    for (const [colorScheme, width] of [["light", 1280], ["dark", 1280], ["light", 390]] as const) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.emulateMedia({ colorScheme });
+      await page.goto(path);
+      expect(await axeViolations(page), `${path} ${colorScheme} ${width}px`).toEqual([]);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.emulateMedia({ colorScheme: "light" });
+
   // Sign out ends the session
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await page.request.get("/api/export?format=json")).status()).toBe(401);
+  expect(await axeViolations(page)).toEqual([]);
   // A signed-out request must not leak application details, not even in the page title.
   const leak = await page.request.get(appPath, { maxRedirects: 0 });
   expect(await leak.text()).not.toContain("Acme Robotics");
