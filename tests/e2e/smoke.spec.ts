@@ -203,6 +203,13 @@ test("track an application end to end", async ({ page }) => {
   await page.getByRole("link", { name: "Analytics" }).click();
   await expect(page.getByRole("cell", { name: "Referral" })).toBeVisible();
   await expect(page.locator(".stat").first()).toContainText("1");
+  // A weekly goal that cannot be saved stays in the box
+  await page.context().setOffline(true);
+  await page.getByLabel("Weekly goal").fill("7");
+  await page.getByRole("button", { name: "Save goal" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Not sent" })).toBeVisible();
+  await expect(page.getByLabel("Weekly goal")).toHaveValue("7");
+  await page.context().setOffline(false);
 
   // Export includes the record
   const res = await page.request.get("/api/export?format=json");
@@ -230,7 +237,7 @@ test("track an application end to end", async ({ page }) => {
   await page.getByRole("link", { name: "Board" }).first().click();
 
   // No axe-core violations on any page with data on it, in light and dark, on desktop and phone widths
-  for (const path of ["/", appPath, "/applications/new", "/tailor", "/analytics", "/questions", "/data"]) {
+  for (const path of ["/", appPath, "/applications/new", "/tailor", "/analytics", "/questions", "/data", "/no-such-page"]) {
     for (const [colorScheme, width] of [["light", 1280], ["dark", 1280], ["light", 390]] as const) {
       await page.setViewportSize({ width, height: 800 });
       await page.emulateMedia({ colorScheme });
@@ -240,6 +247,11 @@ test("track an application end to end", async ({ page }) => {
   }
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.emulateMedia({ colorScheme: "light" });
+  // An unknown address gets the app's own page, not the framework's unstyled one
+  expect((await page.goto("/no-such-page"))!.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Nothing here" })).toBeVisible();
+  await page.getByRole("link", { name: "Back to the board" }).click();
+  await expect(page.getByRole("heading", { name: "Board", level: 1 })).toBeVisible();
 
   // Sign out ends the session (offline it says so and stays put)
   await page.context().setOffline(true);
