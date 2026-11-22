@@ -85,7 +85,7 @@ const DEMO_QUESTIONS: [string, string, Stage, string][] = [
 ];
 
 const daysAgo = (now: Date, days: number) => new Date(now.getTime() - days * 86_400_000).toISOString();
-const isoDate = (now: Date, days: number) => new Date(now.getTime() + days * 86_400_000).toISOString().slice(0, 10);
+const isoDate = (now: Date, days: number) => new Date(now.getTime() + days * 86_400_000).toLocaleDateString("sv-SE"); // local, like today()
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /** Replaces all data with the fictional demo set, dated relative to `now`. */

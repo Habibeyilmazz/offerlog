@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../db/index.ts";
-import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote } from "./data.ts";
+import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote } from "./data.ts";
+import { due, today } from "./format.ts";
 import { seedDemo } from "./seed.ts";
 import { exportCsv, exportJson, importCsv, importJson } from "./transfer.ts";
 import { parseApplication } from "./validate.ts";
@@ -33,6 +34,12 @@ describe("applications", () => {
     deleteApplication(d, id);
     expect(getApplication(d, id)).toBeNull();
     expect(listEvents(d)).toEqual([]);
+  });
+  it("dates demo next steps in local time", () => {
+    const now = new Date(2026, 10, 22, 8); // 08:00 in Auckland is the previous day in UTC
+    seedDemo(d, now);
+    const app = listApplications(d).find((a) => a.company === "Fernhill Games")!;
+    expect(due(app.nextStepDue!, today(now)).label).toBe("Due tomorrow");
   });
   it("stores the weekly goal", () => {
     expect(getWeeklyGoal(d)).toBe(5);
