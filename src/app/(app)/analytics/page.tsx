@@ -34,6 +34,12 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
+      {applied === 0 && (
+        <p className="panel" style={{ marginBottom: 20 }}>
+          Nothing sent yet. These numbers fill in once you move an application from Wishlist to Applied or further.
+        </p>
+      )}
+
       <div className="stat-row">
         <div className="stat">
           <strong>{applied}</strong>

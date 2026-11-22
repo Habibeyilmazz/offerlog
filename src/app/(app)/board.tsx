@@ -39,12 +39,14 @@ export function Board({ cards }: { cards: CardData[] }) {
 
   return (
     <>
-    <div className="board-tools">
-      <label>
-        <span className="sr-only">Filter applications</span>
-        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by company, role, place or source" />
-      </label>
-    </div>
+    {cards.length > 0 && (
+      <div className="board-tools">
+        <label>
+          <span className="sr-only">Filter applications</span>
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Filter by company, role, place or source" />
+        </label>
+      </div>
+    )}
     <div className="board">
       {STAGES.map((stage) => {
         const items = visible.filter((c) => c.stage === stage);

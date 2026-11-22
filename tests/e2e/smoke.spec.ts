@@ -34,6 +34,19 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.locator(".timeline")).toContainText("Recruiter call went well");
   await expect(page.locator(".timeline")).toContainText("Added as Applied");
 
+  // Edit the note and a contact in place
+  await page.locator(".timeline").getByText("Edit note").click();
+  await page.getByLabel("Text of the note").fill("Recruiter call went well, panel next week");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".timeline .note-text")).toHaveText("Recruiter call went well, panel next week");
+  await expect(page.locator(".timeline details.edit[open]")).toHaveCount(0);
+  await page.getByLabel("Name").fill("Dana Reyes");
+  await page.getByRole("button", { name: "Add contact" }).click();
+  await page.locator(".contacts").getByText("Edit Dana Reyes").click();
+  await page.locator(".contacts").getByLabel("Title").fill("Recruiter");
+  await page.getByRole("button", { name: "Save contact" }).click();
+  await expect(page.locator(".contacts li").first()).toContainText("Dana Reyes, Recruiter");
+
   // Move it on the board with the keyboard-friendly menu
   await page.getByRole("link", { name: "Board" }).first().click();
   await page.getByLabel("Move Acme Robotics to stage").selectOption("screening");

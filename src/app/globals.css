@@ -803,7 +803,6 @@ th.num {
 .bar {
   height: 100%;
   background: var(--stage);
-  min-width: 3px;
 }
 .funnel-row .n {
   font-weight: 650;
@@ -886,6 +885,10 @@ th.num {
   .tailor-inputs {
     grid-template-columns: 1fr;
   }
+}
+.job-picker {
+  max-width: 420px;
+  margin-bottom: 14px;
 }
 .tailor-inputs textarea {
   min-height: 260px;

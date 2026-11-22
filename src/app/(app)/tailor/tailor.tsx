@@ -50,23 +50,22 @@ export function Tailor({ jobs, initialJob, ai }: { jobs: Job[]; initialJob: numb
 
   return (
     <>
+      {jobs.length > 0 && (
+        <label className="job-picker">
+          Load a job description from an application
+          <select defaultValue={initialJob ?? ""} onChange={(e) => setJd(jobs.find((j) => j.id === Number(e.target.value))?.description ?? "")}>
+            <option value="">None, I will paste one</option>
+            {jobs.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="tailor-inputs">
         <label>
           Job description
-          {jobs.length > 0 && (
-            <select
-              aria-label="Load a job description from an application"
-              defaultValue={initialJob ?? ""}
-              onChange={(e) => setJd(jobs.find((j) => j.id === Number(e.target.value))?.description ?? "")}
-            >
-              <option value="">Paste below, or load one from an application…</option>
-              {jobs.map((j) => (
-                <option key={j.id} value={j.id}>
-                  {j.label}
-                </option>
-              ))}
-            </select>
-          )}
           <textarea maxLength={30000} value={jd} onChange={(e) => setJd(e.target.value)} placeholder="Paste the job posting here" />
         </label>
         <label>
