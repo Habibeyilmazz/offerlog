@@ -12,9 +12,14 @@ const output = new Writable({
   },
 });
 const rl = createInterface({ input: process.stdin, output, terminal: Boolean(process.stdin.isTTY) });
-const answer = rl.question("Password (min 8 characters): ");
-muted = true;
-const password = await answer;
+const password = await new Promise<string>((resolve) => {
+  rl.question("Password (min 8 characters): ").then(resolve);
+  muted = true;
+  // Piped input whose last line has no newline (`printf %s "$pw" |`) arrives as a "line" event, not as the answer;
+  // empty input (`< /dev/null`, Ctrl-D) only closes the reader.
+  rl.once("line", resolve);
+  rl.once("close", () => resolve(""));
+});
 rl.close();
 process.stderr.write("\n");
 

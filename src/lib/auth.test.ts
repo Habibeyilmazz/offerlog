@@ -1,8 +1,18 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { hashPassword, verifyPassword } from "./password.ts";
 import { clientKey, FailureLimiter } from "./rate-limit.ts";
 
 describe("password", () => {
+  it("hash-password script: reads piped input with or without a final newline, and refuses none", () => {
+    // `node scripts/hash-password.ts < /dev/null` (or Ctrl-D) used to exit 13 with "unsettled top-level await".
+    const run = spawnSync(process.execPath, ["scripts/hash-password.ts"], { input: "", encoding: "utf8" });
+    expect(run.stderr).toContain("Password must be at least 8 characters.");
+    expect(run.status).toBe(1);
+    // A password piped without a final newline (`printf %s "$pw" |`) is read too.
+    const piped = spawnSync(process.execPath, ["scripts/hash-password.ts"], { input: "longenough1", encoding: "utf8" });
+    expect(verifyPassword("longenough1", piped.stdout.replace("OFFERLOG_PASSWORD_HASH=", ""))).toBe(true);
+  });
   it("verifies the right password only", () => {
     const h = hashPassword("correct horse");
     expect(h).toMatch(/^scrypt:16384:8:5:[\w-]+:[\w-]+$/);
