@@ -4,7 +4,36 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, feature round: bring your spreadsheet. The target user almost always starts with a tracking sheet of their own, and the CSV import only read offerlog's own column names: a sheet with `Company Name, Position, Status, Date Applied, ...` was refused with "The CSV needs at least company and role columns" (reproduced in the running app), and a sheet that got past that was refused at the first `Interviewing` or `No response`. Unknown columns were dropped without a word.
+Latest, performance and accessibility round. Measured first against `next start` with Playwright/Chromium on this machine, using the demo data (18 applications) and a 2,000-application database (the import cap), then fixed what the numbers and checks pointed at.
+
+### Fixed
+
+- Accessibility (WCAG 1.4.10 reflow): at 320px, Analytics scrolled 16px sideways (two-column panels had a 320px minimum) and Import & export 14px (the export buttons did not wrap). The smoke test's sideways-scroll and axe checks now run at 320px instead of 390px, and failed before the fix.
+- Accessibility (WCAG 4.1.3 status messages): typing in the board filter only shrank the columns on screen. The board's status region now says "Showing N of M applications." while a filter is set (smoke test checks it).
+- Performance: the board built a new `Intl.NumberFormat` for every card's salary, 40 ms per render at 2,000 cards. `money` in `src/lib/format.ts` keeps one formatter per currency (about 1 ms).
+
+### Measured
+
+| | Before | After |
+|---|---|---|
+| Board, 2,000 applications: time to first byte | 100 ms | 68-74 ms |
+| Board, 2,000 applications: a card move until "Moved" is announced | 157-244 ms | 93-155 ms |
+| Board, 2,000 applications: page load (with 4x CPU slowdown) | 209 ms (526 ms) | 185-198 ms (490 ms) |
+
+Unchanged and fine, so left alone: every page ships about 142 KB of gzipped JavaScript (React and Next.js; no server code or SDK in client chunks) and 4.7 KB of CSS; demo-data pages load in 16-33 ms with LCP under 70 ms. The 2,000-card board is 28,567 DOM nodes and 85 KB gzipped HTML (1.8 MB decoded); a filter keystroke takes at most 48 ms (120 ms at 4x CPU slowdown), under the 200 ms "good" INP line; a move answers with 420 KB, because the whole board is re-rendered so Up next and the waiting list stay right. Importing 2,000 applications takes 155-167 ms (CSV or JSON), exporting 10 ms. `next start` is ready in about 0.3 s using 126 MB of memory.
+
+### Checked, nothing to change
+
+- Text spacing (WCAG 1.4.12: line height 1.5, letter spacing 0.12em, word spacing 0.16em) at 1280px and 320px: nothing clipped except the intentional one-line ellipsis on Up next, whose full text is on the application page. Heading order, page titles, form labels, focus rings and tab order checked on every page; the sidebar is not sticky on phones, so it never covers focus.
+- Lean: every dependency is used; every CSS class is referenced; no dead exports beyond types exported only for their own file. Nothing deleted. SEO does not apply: the app is private and already sends `noindex`.
+
+### Notes for the next agent
+
+- To re-measure, seed a database with `OFFERLOG_DB=<file> node scripts/seed.ts`, add rows with `createApplication` from `src/lib/data.ts`, and start `next start` with that `OFFERLOG_DB` on a free port. `npx playwright test` deletes `test-results/` when it starts, so keep perf databases elsewhere.
+- Codex was over its usage limit again (until 09:32 local), so this round's diff was reviewed by hand.
+- Not done: the free-text Salary column (`40k-45k`, `$90,000`, `DOE`) is still named as not imported rather than parsed; this round treated it as a missing feature, not a bug. Still open: the 14-day follow-up threshold is a constant; the AI rewrite is only tested with a mocked client; the base image is not digest-pinned; the social preview needs a manual upload.
+
+Earlier, feature round: bring your spreadsheet. The target user almost always starts with a tracking sheet of their own, and the CSV import only read offerlog's own column names: a sheet with `Company Name, Position, Status, Date Applied, ...` was refused with "The CSV needs at least company and role columns" (reproduced in the running app), and a sheet that got past that was refused at the first `Interviewing` or `No response`. Unknown columns were dropped without a word.
 
 ### Added
 
