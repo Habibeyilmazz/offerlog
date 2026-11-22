@@ -136,8 +136,9 @@ export function addContact(d: Db, applicationId: number, c: { name: string; titl
   return true;
 }
 
-export function updateContact(d: Db, id: number, c: { name: string; title: string; email: string; url: string }) {
-  d.update(contacts).set(c).where(eq(contacts.id, id)).run();
+/** False when the contact no longer exists (deleted in another tab). */
+export function updateContact(d: Db, id: number, c: { name: string; title: string; email: string; url: string }): boolean {
+  return d.update(contacts).set(c).where(eq(contacts.id, id)).run().changes > 0;
 }
 
 export function deleteContact(d: Db, id: number) {
@@ -151,9 +152,9 @@ export function addNote(d: Db, applicationId: number, body: string, stage: Stage
   return true;
 }
 
-/** Changes the text only; the note keeps its date and its place in the timeline. */
-export function updateNote(d: Db, id: number, body: string) {
-  d.update(notes).set({ body }).where(eq(notes.id, id)).run();
+/** Changes the text only; the note keeps its date and its place in the timeline. False when the note no longer exists. */
+export function updateNote(d: Db, id: number, body: string): boolean {
+  return d.update(notes).set({ body }).where(eq(notes.id, id)).run().changes > 0;
 }
 
 export function deleteNote(d: Db, id: number) {
@@ -168,10 +169,11 @@ export function saveQuestion(
   d: Db,
   q: { id?: number; question: string; category: string; stage: string; answer: string },
   at = nowIso(),
-) {
+): boolean {
   const { id, ...values } = q;
-  if (id) d.update(questions).set(values).where(eq(questions.id, id)).run();
-  else d.insert(questions).values({ ...values, createdAt: at }).run();
+  if (id) return d.update(questions).set(values).where(eq(questions.id, id)).run().changes > 0;
+  d.insert(questions).values({ ...values, createdAt: at }).run();
+  return true;
 }
 
 export function deleteQuestion(d: Db, id: number) {

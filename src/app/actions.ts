@@ -120,7 +120,7 @@ export async function updateContact(_prev: FormState, form: FormData): Promise<F
   const raw = fields(form);
   const contact = parseContact(raw);
   if (!contact.ok) return { error: contact.error };
-  data.updateContact(db(), id(raw.id), contact.value);
+  if (!data.updateContact(db(), id(raw.id), contact.value)) return { error: "That contact no longer exists. It may have been deleted in another tab." };
   revalidatePath(`/applications/${id(raw.applicationId)}`);
   return {};
 }
@@ -157,7 +157,7 @@ export async function updateNote(_prev: FormState, form: FormData): Promise<Form
   const raw = fields(form);
   const { body, error } = noteBody(raw);
   if (!body) return { error };
-  data.updateNote(db(), id(raw.id), body);
+  if (!data.updateNote(db(), id(raw.id), body)) return { error: "That note no longer exists. It may have been deleted in another tab." };
   revalidatePath(`/applications/${id(raw.applicationId)}`);
   return {};
 }
@@ -184,7 +184,8 @@ export async function saveQuestion(_prev: FormState, form: FormData): Promise<Fo
   if (!question) return { error: "Write the question first." };
   if (!(QUESTION_CATEGORIES as readonly string[]).includes(category)) return { error: "Pick a category." };
   if (!isStage(stage)) return { error: "Pick a stage." };
-  data.saveQuestion(db(), { id: raw.id ? id(raw.id) : undefined, question, category, stage, answer });
+  if (!data.saveQuestion(db(), { id: raw.id ? id(raw.id) : undefined, question, category, stage, answer }))
+    return { error: "That question no longer exists. It may have been deleted in another tab." };
   revalidatePath("/", "layout");
   return { message: raw.id ? "Saved." : "Added to the bank." };
 }

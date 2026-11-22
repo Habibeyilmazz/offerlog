@@ -44,6 +44,19 @@ describe("applications", () => {
     expect(addNote(d, id, "hello", null)).toBe(false);
     expect(addContact(d, id, { name: "Sam", title: "", email: "", url: "" })).toBe(false);
   });
+  it("returns false when an edited note, contact or question was deleted meanwhile, so the edit is not reported as saved", () => {
+    const id = createApplication(d, input({ company: "A", role: "B" }));
+    addNote(d, id, "hello", null);
+    addContact(d, id, { name: "Sam", title: "", email: "", url: "" });
+    saveQuestion(d, { question: "Why us?", category: "company", stage: "screening", answer: "" });
+    const q = { question: "Why us?", category: "company", stage: "screening", answer: "a long answer" };
+    expect(updateNote(d, 1, "edited")).toBe(true);
+    expect(updateContact(d, 1, { name: "Sam O", title: "", email: "", url: "" })).toBe(true);
+    expect(saveQuestion(d, { id: 1, ...q })).toBe(true);
+    expect(updateNote(d, 99, "edited")).toBe(false);
+    expect(updateContact(d, 99, { name: "Sam O", title: "", email: "", url: "" })).toBe(false);
+    expect(saveQuestion(d, { id: 99, ...q })).toBe(false);
+  });
   it("offers demo data only while there are no applications and no questions", () => {
     expect(isEmptyTracker(d)).toBe(true);
     saveQuestion(d, { question: "Why us?", category: "company", stage: "screening", answer: "my notes" });
