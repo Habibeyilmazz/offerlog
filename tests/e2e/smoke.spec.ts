@@ -94,8 +94,12 @@ test("track an application end to end", async ({ page }) => {
 
   // Move it on the board with the keyboard-friendly menu
   await page.getByRole("link", { name: "Board" }).first().click();
+  await page.getByLabel("Move Acme Robotics to stage").focus();
   await page.getByLabel("Move Acme Robotics to stage").selectOption("screening");
   await expect(page.getByRole("region", { name: "Screening" })).toContainText("Acme Robotics", { timeout: 10_000 });
+  // The card changed column; keyboard focus stays on its menu and the move is announced
+  await expect(page.getByLabel("Move Acme Robotics to stage")).toBeFocused();
+  await expect(page.getByRole("status")).toHaveText("Moved Acme Robotics to Screening.");
   await page.reload();
   await expect(page.getByRole("region", { name: "Screening" })).toContainText("Acme Robotics");
   await expect(page.getByText("Email the recruiter")).toBeVisible();

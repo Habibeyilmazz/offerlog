@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { moveApplication } from "@/app/actions.ts";
 import type { DueState } from "@/lib/format.ts";
 import { STAGE_LABELS, STAGES, type Stage } from "@/lib/stages.ts";
@@ -26,19 +26,28 @@ export function Board({ cards }: { cards: CardData[] }) {
   const [dropStage, setDropStage] = useState<Stage | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+  // A card moved with its menu remounts in another column, which drops keyboard focus; put it back on that menu.
+  const refocus = useRef<number | null>(null);
+  useEffect(() => {
+    if (refocus.current !== null && document.activeElement === document.body)
+      document.querySelector<HTMLElement>(`[data-card="${refocus.current}"] select`)?.focus();
+  }, [optimistic]);
   const q = query.trim().toLowerCase();
   const visible = q ? optimistic.filter((c) => [c.company, c.role, c.where, c.source].some((f) => f.toLowerCase().includes(q))) : optimistic;
 
   function move(id: number, stage: Stage) {
     setMovingId(id);
     setError("");
+    setStatus("");
+    const company = cards.find((c) => c.id === id)?.company ?? "the application";
     startTransition(async () => {
       setOptimistic({ id, stage });
       try {
         await moveApplication(id, stage);
+        setStatus(`Moved ${company} to ${STAGE_LABELS[stage]}.`);
       } catch {
         // Offline or a server error: the optimistic move is undone when the transition ends; keep the board and say why.
-        const company = cards.find((c) => c.id === id)?.company ?? "the application";
         setError(`Could not move ${company} to ${STAGE_LABELS[stage]}. Check your connection and try again.`);
       }
       setMovingId(null);
@@ -55,6 +64,9 @@ export function Board({ cards }: { cards: CardData[] }) {
         </label>
       </div>
     )}
+    <p role="status" className="sr-only">
+      {status}
+    </p>
     {error && (
       <p className="error" role="alert" style={{ marginBottom: 10 }}>
         {error}
@@ -94,10 +106,14 @@ export function Board({ cards }: { cards: CardData[] }) {
                 {items.map((c) => (
                   <li
                     key={c.id}
+                    data-card={c.id}
                     className="card"
                     draggable
                     aria-busy={pending && movingId === c.id}
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", String(c.id))}
+                    onDragStart={(e) => {
+                      refocus.current = null;
+                      e.dataTransfer.setData("text/plain", String(c.id));
+                    }}
                   >
                     <Link href={`/applications/${c.id}`} className="company">
                       {c.company}
@@ -113,7 +129,10 @@ export function Board({ cards }: { cards: CardData[] }) {
                     <select
                       aria-label={`Move ${c.company} to stage`}
                       value={c.stage}
-                      onChange={(e) => move(c.id, e.target.value as Stage)}
+                      onChange={(e) => {
+                        refocus.current = c.id;
+                        move(c.id, e.target.value as Stage);
+                      }}
                     >
                       {STAGES.map((s) => (
                         <option key={s} value={s}>
