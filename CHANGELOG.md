@@ -4,7 +4,38 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, design and UX pass: every page was checked in real screenshots at 1440px and 390px, in light and dark, and with an axe-core WCAG 2.2 AA scan (no violations left on any page in either theme).
+Latest, security pass: auth, sessions, input validation, injection and SSRF sinks, XSS, headers, git history, dependencies, CI and Docker defaults were reviewed, and each finding was checked against the running app before it was fixed.
+
+### Fixed
+
+- Saving a contact with a link the server refuses (the browser's `type=url` lets `javascript:` and `ftp:` through) did nothing and said nothing. Contacts now go through `parseContact` in `src/lib/validate.ts` (name, email shape, http(s) link, lengths), and the form shows the error and keeps what was typed (`contact-form.tsx`).
+- Security: sessions survived a password change. Tokens were stored as a plain SHA-256, so a cookie kept working for up to 30 days after `OFFERLOG_PASSWORD_HASH` was replaced or removed. The stored digest is now an HMAC keyed by the password hash, and nothing counts as signed in while the hash is unset. Everyone signs in once more after this upgrade.
+- Security: the per-client login limit used the first `X-Forwarded-For` entry, which the client controls even behind a proxy. It now uses the last hop (`clientKey` in `src/lib/rate-limit.ts`). The global 30-per-15-minutes limit was and still is the backstop when there is no proxy.
+- Security: the JSON/CSV export (a full personal backup) had no `Cache-Control`; it is now `no-store`.
+
+### Added
+
+- Response headers on every route: `frame-ancestors 'none'` and `X-Frame-Options: DENY` (no clickjacking), `nosniff`, `base-uri`/`form-action`/`object-src` limits, `Referrer-Policy: same-origin` (`next.config.ts`).
+- CI fails on a moderate or worse advisory in a runtime dependency (`npm audit --omit=dev`), and `actions/checkout` no longer persists the job token.
+- `compose.yaml` publishes the port on `127.0.0.1` only, since the app speaks plain HTTP; the README says to put a TLS proxy in front for other devices.
+- Tests: `src/lib/session.test.ts` (session lifecycle, logout replay, password-hash rotation), `parseContact` and `clientKey` cases, and smoke-test checks for the contact error, the headers and the export's `no-store`.
+
+### Checked, nothing to change
+
+- Signed-out requests to every page, including RSC and segment-prefetch requests with real router-state headers captured from a browser, all get an empty 307; every page, route and server action checks the session itself.
+- No SSRF, path, shell or raw-SQL sinks (the only outbound call is the Anthropic SDK); no `dangerouslySetInnerHTML`; user links are limited to http(s) and rendered with `rel="noopener noreferrer"`.
+- Git history has no keys, tokens, `.env` or database files.
+- `npm audit` lists 4 moderate advisories, all in drizzle-kit's bundled esbuild dev server (dev-only, never started; `npm audit fix --force` would downgrade drizzle-kit to 0.18). Runtime dependencies have none.
+- A Codex review of this round's diff and the auth code found no further problems.
+
+### Notes for the next agent
+
+- `src/lib/session.ts` now uses relative imports like the rest of `src/lib`, so vitest can load it; its test mocks `next/headers` and uses an in-memory database.
+- There is no `script-src` CSP: Next's inline scripts would need per-request nonces. React escapes all user text, so this is a recorded shortcut, not a known hole.
+- The `/security-review` skill could not run in this session (it needs the agent's working directory to be a git repo), so the review was done by hand.
+- Still open: the AI rewrite is only tested with a mocked client (no key was available), and there is no manual theme switch.
+
+Earlier, design and UX pass: every page was checked in real screenshots at 1440px and 390px, in light and dark, and with an axe-core WCAG 2.2 AA scan (no violations left on any page in either theme).
 
 ### Added
 

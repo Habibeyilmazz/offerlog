@@ -29,7 +29,7 @@ node scripts/hash-password.ts >> .env   # the script has no dependencies, so no 
 docker compose up -d --build            # http://localhost:4220
 ```
 
-The database lives in the `offerlog-data` volume. No Node on the host? Run the script on any machine with Node 22.18+ and copy the printed `OFFERLOG_PASSWORD_HASH=...` line into `.env`.
+Compose publishes the port on `127.0.0.1` only, because the app itself speaks plain HTTP. To open it from your phone or another machine, put a TLS reverse proxy (Caddy, nginx) in front of it rather than widening the port mapping. The database lives in the `offerlog-data` volume. No Node on the host? Run the script on any machine with Node 22.18+ and copy the printed `OFFERLOG_PASSWORD_HASH=...` line into `.env`.
 
 ### Configuration
 
@@ -70,7 +70,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 - **Stage history is the source of truth.** Each stage change writes a row to `events`. An application counts as sent from its first move past wishlist (rejected and ghosted imply it was sent). The funnel counts the furthest stage each application reached, so skipping a stage counts as passing it. A reply is a move to screening, interview, offer or rejected; ghosted is not a reply. Time to reply is measured from the applied event, so an application logged straight into screening counts as replied but has no reply time. The weekly chart counts each application once, in the week it was sent. See `src/lib/analytics.ts`.
 - **Keyword gaps** (`src/lib/keywords.ts`) match a curated vocabulary of about 140 skills and tools, with aliases (`k8s` counts as Kubernetes, `Postgres` as PostgreSQL) and symbol-aware word boundaries so `Java` does not match inside `JavaScript` and `C++`, `C#` and `.NET` work. No network call, no model: the same input always gives the same report.
 - **AI rewrite** (`src/lib/ai.ts`) sends only the job description and the bullets you paste to the Anthropic Messages API (`claude-opus-5-5`, with server-side fallback on refusals). It only runs when you press the button and the key is set.
-- **Security**: the password is checked against an scrypt hash with a constant-time compare. Sessions are random 256-bit tokens; only their SHA-256 is stored, and the cookie is HttpOnly and `SameSite=Lax`. Failed sign-ins are limited to 5 per client and 30 overall per 15 minutes. Every server action and route checks the session and validates its input; Next.js rejects server action requests whose `Origin` does not match the host. CSV exports neutralise spreadsheet formulas.
+- **Security**: the password is checked against an scrypt hash with a constant-time compare. Sessions are random 256-bit tokens; only an HMAC of each, keyed by the password hash, is stored, so changing `OFFERLOG_PASSWORD_HASH` signs out every session. The cookie is HttpOnly and `SameSite=Lax`. Failed sign-ins are limited to 5 per client (keyed on the last `X-Forwarded-For` hop, the one your proxy adds) and 30 overall per 15 minutes. Every server action and route checks the session and validates its input; Next.js rejects server action requests whose `Origin` does not match the host. CSV exports neutralise spreadsheet formulas and are sent with `Cache-Control: no-store`. Every response forbids framing and MIME sniffing. CI fails on a known advisory in a runtime dependency.
 
 ## Development
 
