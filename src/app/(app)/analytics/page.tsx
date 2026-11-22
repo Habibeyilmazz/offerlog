@@ -114,7 +114,8 @@ export default async function AnalyticsPage() {
         {sources.length === 0 ? (
           <p className="muted">Move an application to Applied to start measuring.</p>
         ) : (
-          <div className="table-wrap">
+          // Focusable so a keyboard user can scroll the table sideways on a phone.
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Table of responses by source">
             <table>
               <thead>
                 <tr>

@@ -7,7 +7,7 @@ export const metadata = { title: "Sign in to offerlog" };
 export default async function LoginPage() {
   if (await isSignedIn()) redirect("/");
   return (
-    <div className="login">
+    <main className="login">
       <div className="panel">
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -17,6 +17,6 @@ export default async function LoginPage() {
         <p className="muted">Your job search, on your own machine.</p>
         <LoginForm />
       </div>
-    </div>
+    </main>
   );
 }
