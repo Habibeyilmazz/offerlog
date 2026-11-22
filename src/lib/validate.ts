@@ -42,6 +42,15 @@ export function isIsoDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
 }
 
+/** Optional YYYY-MM-DD field that may not be later than `todayIso`; null when empty. */
+export function pastDay(raw: Raw, key: string, todayIso: string): Result<string | null> {
+  const s = str(raw, key, 40);
+  if (!s) return { ok: true, value: null };
+  if (!isIsoDate(s)) return { ok: false, error: "Dates must be YYYY-MM-DD." };
+  if (s > todayIso) return { ok: false, error: "The date cannot be in the future." };
+  return { ok: true, value: s };
+}
+
 export function safeUrl(s: string): boolean {
   if (s === "") return true;
   try {

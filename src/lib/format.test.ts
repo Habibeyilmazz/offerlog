@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { due, money, place, plural } from "./format.ts";
+import { due, money, onDay, place, plural, today } from "./format.ts";
 
 describe("format", () => {
   it("formats salary ranges compactly", () => {
@@ -22,5 +22,11 @@ describe("format", () => {
     expect(due("2026-11-20", "2026-11-22")).toEqual({ label: "2 days overdue", state: "overdue" });
     expect(due("2026-11-22", "2026-11-22").state).toBe("today");
     expect(due("2026-11-23", "2026-11-22").label).toBe("Due tomorrow");
+  });
+  it("moves a timestamp to another local day, keeping the local time of day", () => {
+    const at = new Date(2026, 10, 22, 8, 30).toISOString(); // 08:30 in Auckland is the previous day in UTC
+    const moved = new Date(onDay(at, "2026-11-03"));
+    expect(today(moved)).toBe("2026-11-03");
+    expect([moved.getHours(), moved.getMinutes()]).toEqual([8, 30]);
   });
 });

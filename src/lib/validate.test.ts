@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIsoDate, parseApplication, parseContact } from "./validate.ts";
+import { isIsoDate, parseApplication, parseContact, pastDay } from "./validate.ts";
 
 describe("parseApplication", () => {
   it("applies defaults and normalises", () => {
@@ -45,5 +45,14 @@ describe("parseContact", () => {
     const r = parseContact(raw);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain(msg);
+  });
+});
+
+describe("pastDay", () => {
+  it("accepts empty, today and earlier days, and refuses the future and bad dates", () => {
+    expect(pastDay({}, "d", "2026-11-22")).toEqual({ ok: true, value: null });
+    expect(pastDay({ d: "2026-11-22" }, "d", "2026-11-22")).toEqual({ ok: true, value: "2026-11-22" });
+    expect(pastDay({ d: "2026-11-23" }, "d", "2026-11-22")).toMatchObject({ ok: false, error: expect.stringContaining("future") });
+    expect(pastDay({ d: "22/11/2026" }, "d", "2026-11-22")).toMatchObject({ ok: false, error: expect.stringContaining("YYYY-MM-DD") });
   });
 });

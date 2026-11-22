@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../db/index.ts";
-import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote } from "./data.ts";
+import { createApplication, deleteApplication, getApplication, getWeeklyGoal, listApplications, listEvents, moveApplication, setWeeklyGoal, updateApplication, addNote, addContact, updateContact, updateNote, removeEvent, setEventDate } from "./data.ts";
+import { funnel } from "./analytics.ts";
 import { due, today } from "./format.ts";
 import { seedDemo } from "./seed.ts";
 import { exportCsv, exportJson, importCsv, importJson } from "./transfer.ts";
@@ -57,6 +58,61 @@ describe("applications", () => {
     setWeeklyGoal(d, 8);
     setWeeklyGoal(d, 9);
     expect(getWeeklyGoal(d)).toBe(9);
+  });
+});
+
+describe("correcting the timeline", () => {
+  const local = (day: number, hour: number) => new Date(2026, 10, day, hour).toISOString();
+  const now = new Date(2026, 10, 22, 12);
+  const chain = (id: number) => getApplication(d, id)!.events.map((e) => [e.fromStage, e.toStage, today(new Date(e.at))]);
+
+  it("redates a stage change and keeps the timeline in order", () => {
+    const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(20, 9));
+    moveApplication(d, id, "screening", local(22, 10));
+    const [added, screening] = getApplication(d, id)!.events;
+    expect(setEventDate(d, added.id, "2026-11-03", now)).toBeNull();
+    expect(getApplication(d, id)!.app.createdAt).toBe(local(3, 9)); // the first entry carries the application's date
+    expect(setEventDate(d, screening.id, "2026-11-10", now)).toBeNull();
+    expect(chain(id)).toEqual([[null, "applied", "2026-11-03"], ["applied", "screening", "2026-11-10"]]);
+    expect(new Date(getApplication(d, id)!.events[1].at).getHours()).toBe(10);
+    // Cannot jump over a neighbour.
+    expect(setEventDate(d, screening.id, "2026-11-02", now)).toMatch(/after the move to Applied on Nov 3, 2026/);
+    expect(setEventDate(d, added.id, "2026-11-11", now)).toMatch(/before the move to Screening on Nov 10, 2026/);
+    expect(setEventDate(d, 999, "2026-11-11", now)).toMatch(/no longer exists/);
+  });
+  it("nudges the time on a neighbour's day and never lands after now", () => {
+    const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(10, 15));
+    moveApplication(d, id, "screening", local(12, 9));
+    const [added, screening] = getApplication(d, id)!.events;
+    expect(setEventDate(d, added.id, "2026-11-12", now)).toBeNull(); // 15:00 would land after the 09:00 move
+    const evs = getApplication(d, id)!.events;
+    expect(evs.map((e) => e.id)).toEqual([added.id, screening.id]);
+    expect(Date.parse(evs[1].at) - Date.parse(evs[0].at)).toBe(1000);
+    const late = createApplication(d, input({ company: "C", role: "D" }), local(1, 18));
+    expect(setEventDate(d, getApplication(d, late)!.events[0].id, "2026-11-22", now)).toBeNull();
+    expect(getApplication(d, late)!.events[0].at).toBe(now.toISOString());
+  });
+  it("removes a mistaken move, so the funnel no longer counts it", () => {
+    const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(1, 9));
+    moveApplication(d, id, "offer", local(2, 9)); // dropped in the wrong column
+    moveApplication(d, id, "applied", local(2, 10)); // and dragged back
+    expect(funnel(listEvents(d)).find((r) => r.stage === "offer")!.reached).toBe(1);
+    const offer = getApplication(d, id)!.events[1];
+    expect(removeEvent(d, offer.id)).toBeNull();
+    expect(chain(id)).toEqual([[null, "applied", "2026-11-01"]]); // the move back is a no-op now and goes too
+    expect(funnel(listEvents(d)).find((r) => r.stage === "offer")!.reached).toBe(0);
+  });
+  it("re-links later entries and moves the application back when the last change is removed", () => {
+    const id = createApplication(d, input({ company: "A", role: "B", stage: "applied" }), local(1, 9));
+    moveApplication(d, id, "screening", local(3, 9));
+    moveApplication(d, id, "interview", local(5, 9));
+    const [first, screening, interview] = getApplication(d, id)!.events;
+    expect(removeEvent(d, first.id)).toMatch(/first entry/);
+    expect(removeEvent(d, screening.id)).toBeNull();
+    expect(chain(id)).toEqual([[null, "applied", "2026-11-01"], ["applied", "interview", "2026-11-05"]]);
+    expect(removeEvent(d, interview.id)).toBeNull();
+    expect(getApplication(d, id)!.app.stage).toBe("applied");
+    expect(chain(id)).toEqual([[null, "applied", "2026-11-01"]]);
   });
 });
 

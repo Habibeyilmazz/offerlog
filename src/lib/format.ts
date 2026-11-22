@@ -10,6 +10,13 @@ export function today(now = new Date()): string {
   return now.toLocaleDateString("sv-SE");
 }
 
+/** The timestamp `iso` moved to calendar day `day` (YYYY-MM-DD), keeping its local time of day. */
+export function onDay(iso: string, day: string): string {
+  const t = new Date(iso);
+  const [y, m, d] = day.split("-").map(Number);
+  return new Date(y, m - 1, d, t.getHours(), t.getMinutes(), t.getSeconds(), t.getMilliseconds()).toISOString();
+}
+
 export type DueState = "overdue" | "today" | "soon";
 
 /** Human label for a YYYY-MM-DD due date relative to `todayIso`. */

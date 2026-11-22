@@ -1,7 +1,8 @@
 import { asc, desc, eq } from "drizzle-orm";
 import type { Db } from "../db/index.ts";
 import { applications, contacts, events, notes, questions, settings } from "../db/schema.ts";
-import type { Stage } from "./stages.ts";
+import { onDay, shortDate, today } from "./format.ts";
+import { STAGE_LABELS, type Stage } from "./stages.ts";
 import type { ApplicationInput } from "./validate.ts";
 
 const nowIso = () => new Date().toISOString();
@@ -53,6 +54,66 @@ export function getApplication(d: Db, id: number) {
     notes: d.select().from(notes).where(eq(notes.applicationId, id)).orderBy(desc(notes.createdAt)).all(),
     events: d.select().from(events).where(eq(events.applicationId, id)).orderBy(asc(events.at)).all(),
   };
+}
+
+function eventsOf(d: Db, eventId: number) {
+  const ev = d.select().from(events).where(eq(events.id, eventId)).get();
+  if (!ev) return null;
+  const list = d.select().from(events).where(eq(events.applicationId, ev.applicationId)).orderBy(asc(events.at), asc(events.id)).all();
+  return { ev, list, i: list.findIndex((e) => e.id === eventId) };
+}
+
+/**
+ * Moves a stage change to another calendar day (YYYY-MM-DD), keeping its time of day and its
+ * place in the timeline. Redating the first entry also redates the application. Returns an error, or null.
+ */
+export function setEventDate(d: Db, eventId: number, day: string, now = new Date()): string | null {
+  return d.transaction((tx) => {
+    const found = eventsOf(tx as unknown as Db, eventId);
+    if (!found) return "That timeline entry no longer exists.";
+    const { ev, list, i } = found;
+    const prev = list[i - 1];
+    const next = list[i + 1];
+    if (prev && day < today(new Date(prev.at)))
+      return `This came after the move to ${STAGE_LABELS[prev.toStage as Stage]} on ${shortDate(prev.at)}. Pick that day or later, or change that entry first.`;
+    if (next && day > today(new Date(next.at)))
+      return `This came before the move to ${STAGE_LABELS[next.toStage as Stage]} on ${shortDate(next.at)}. Pick that day or earlier, or change that entry first.`;
+    // On the same day as a neighbour, nudge the time so the order of the timeline stays the same.
+    let t = Math.min(Date.parse(onDay(ev.at, day)), now.getTime());
+    if (prev) t = Math.max(t, Date.parse(prev.at) + 1000);
+    if (next) t = Math.min(t, Date.parse(next.at) - 1000);
+    if ((prev && t <= Date.parse(prev.at)) || (next && t >= Date.parse(next.at)))
+      return "The entries around this one are too close together to keep them in order.";
+    const at = new Date(t).toISOString();
+    tx.update(events).set({ at }).where(eq(events.id, eventId)).run();
+    if (i === 0) tx.update(applications).set({ createdAt: at }).where(eq(applications.id, ev.applicationId)).run();
+    return null;
+  });
+}
+
+/**
+ * Removes a stage change logged by mistake. Later entries are re-linked (a move straight back
+ * disappears with it) and the application's stage follows its last remaining entry.
+ * The first entry cannot be removed. Returns an error, or null.
+ */
+export function removeEvent(d: Db, eventId: number, at = nowIso()): string | null {
+  return d.transaction((tx) => {
+    const found = eventsOf(tx as unknown as Db, eventId);
+    if (!found) return "That timeline entry no longer exists.";
+    const { ev, list, i } = found;
+    if (i === 0) return "The first entry records when the application was added. Delete the application instead.";
+    let prev = list[0];
+    for (const e of list.slice(1)) {
+      if (e.id === eventId || e.toStage === prev.toStage) {
+        tx.delete(events).where(eq(events.id, e.id)).run();
+        continue;
+      }
+      if (e.fromStage !== prev.toStage) tx.update(events).set({ fromStage: prev.toStage }).where(eq(events.id, e.id)).run();
+      prev = e;
+    }
+    tx.update(applications).set({ stage: prev.toStage, updatedAt: at }).where(eq(applications.id, ev.applicationId)).run();
+    return null;
+  });
 }
 
 export function addContact(d: Db, applicationId: number, c: { name: string; title: string; email: string; url: string }) {
