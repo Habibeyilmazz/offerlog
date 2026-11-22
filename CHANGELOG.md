@@ -4,7 +4,22 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, second reliability round. The running app (`next start`, Chromium via Playwright) and `src/lib` were pushed with spreadsheet-style CSVs, Excel encodings, padded and mistyped dates, text pasted from PDFs, files over the limits, a 4.9 MB import, long unbroken links at 390px, stale tabs and piped script input. Each bug below was reproduced first (in the browser, or with a script against `src/lib`), got a failing vitest or smoke-test check, then the fix.
+Latest, launch round. Most of the launch checklist (pitch, GIF, quickstart, comparison, roadmap, CONTRIBUTING, SECURITY, issue templates, repo description and topics) was already in place, so this round checked it against the running app instead of rewriting it.
+
+### Changed
+
+- `docs/demo.gif` now opens with **Follow up** on the waiting-on-a-reply list (Lumen Robotics leaves the list and shows in Up next as due today) before the drag, application, tailor and analytics steps. `scripts/demo.mjs` clicks the button by its accessible name and fails if the card does not leave the list. README alt text and the reseed note say so.
+
+### Checked, nothing to change
+
+- README quickstart from a fresh `git clone` of `main`: `npm ci --ignore-scripts` (no compiler), `hash-password.ts` with a piped password, `npm run build`, `npm start` on `127.0.0.1:4220`, sign in, **Load demo data**: board with Up next and the waiting list, no console errors.
+- `npm test` 120 passed, `npm run typecheck` clean, `npm run test:e2e` passed. `npm audit` shows exactly the four drizzle-kit esbuild advisories SECURITY.md names; none in runtime dependencies.
+
+### Notes for the next agent
+
+- Still open, not done here: the 14-day follow-up threshold is a constant; the AI rewrite is only tested with a mocked client (no key on this machine); the CSV byte order mark is not checked in Excel itself; the Docker base image is not digest-pinned (pinning without Dependabot or similar would also freeze its security updates, so add both or neither); the social preview (`assets/social-preview.png`) must be uploaded by hand in the repo settings; GitHub private vulnerability reporting is off, and SECURITY.md covers both cases.
+
+Earlier, second reliability round. The running app (`next start`, Chromium via Playwright) and `src/lib` were pushed with spreadsheet-style CSVs, Excel encodings, padded and mistyped dates, text pasted from PDFs, files over the limits, a 4.9 MB import, long unbroken links at 390px, stale tabs and piped script input. Each bug below was reproduced first (in the browser, or with a script against `src/lib`), got a failing vitest or smoke-test check, then the fix.
 
 ### Fixed
 
