@@ -4,6 +4,7 @@ import { completeNextStep, deleteApplication, deleteNote } from "@/app/actions.t
 import { db } from "@/db/index.ts";
 import { getApplication, listQuestions } from "@/lib/data.ts";
 import { due, money, place, shortDate, today } from "@/lib/format.ts";
+import { hasCalendarStep } from "@/lib/ics.ts";
 import { requireUser } from "@/lib/session.ts";
 import { PREP_STAGES, STAGE_LABELS, type Stage } from "@/lib/stages.ts";
 import { ApplicationForm } from "../../application-form.tsx";
@@ -100,6 +101,11 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
               <strong>Next step</strong>
               <span className="what">{app.nextStep}</span>
               {nextDue && <span className={`due ${nextDue.state}`}>{nextDue.label}</span>}
+              {hasCalendarStep(app) && (
+                <a href={`/api/export?format=ics&id=${app.id}`} download>
+                  Add to calendar
+                </a>
+              )}
               <form action={completeNextStep}>
                 <input type="hidden" name="id" value={app.id} />
                 <SubmitButton className="btn secondary">Mark done</SubmitButton>

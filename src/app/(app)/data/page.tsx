@@ -28,6 +28,14 @@ export default async function DataPage() {
               Download CSV
             </a>
           </div>
+          <h3 style={{ marginTop: 20 }}>Calendar</h3>
+          <p className="muted" style={{ margin: "6px 0 14px" }}>
+            Every open next step with a due date as an all-day event with a 9:00 reminder. Events keep their ID across downloads, so calendars
+            that match by ID update them on a re-import. A step you mark done stays in your calendar until you delete it there.
+          </p>
+          <a className="btn secondary" href="/api/export?format=ics" download>
+            Download next steps (.ics)
+          </a>
         </section>
         <section className="panel" aria-labelledby="import-h">
           <h2 id="import-h">Import</h2>

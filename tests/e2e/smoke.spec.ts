@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import { E2E_PASSWORD } from "../../playwright.config.ts";
 
@@ -49,6 +50,13 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Acme Robotics", level: 1 })).toBeVisible();
   const appPath = new URL(page.url()).pathname;
   await expect(page.getByText("$50K–$60K")).toBeVisible();
+
+  // The next step goes to a calendar as an all-day event
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Add to calendar" }).click();
+  const event = await readFile(await (await download).path(), "utf8");
+  expect(event).toContain("SUMMARY:Acme Robotics: Email the recruiter\r\n");
+  expect(event).toContain("DTSTART;VALUE=DATE:20300115\r\n");
 
   // Dated note shows up in the timeline
   await page.getByPlaceholder(/Add a dated note/).fill("Recruiter call went well");
