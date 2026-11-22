@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addContact, addNote, completeNextStep, deleteApplication, deleteContact, deleteNote, updateContact, updateNote } from "@/app/actions.ts";
+import { addNote, completeNextStep, deleteApplication, deleteNote, updateNote } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
 import { getApplication, listQuestions } from "@/lib/data.ts";
 import { due, money, place, shortDate, today } from "@/lib/format.ts";
@@ -9,6 +9,7 @@ import { PREP_STAGES, STAGE_LABELS, type Stage } from "@/lib/stages.ts";
 import { ApplicationForm } from "../../application-form.tsx";
 import { StagePill } from "../../stage-pill.tsx";
 import { SubmitButton } from "../../submit-button.tsx";
+import { ContactForm } from "./contact-form.tsx";
 
 type Entry =
   | { kind: "event"; key: string; at: string; from: Stage | null; to: Stage }
@@ -44,31 +45,6 @@ function NoteEditor({ id, appId, body, what }: { id: number; appId: number; body
         </div>
       </form>
     </details>
-  );
-}
-
-type ContactValues = { name: string; title: string; email: string; url: string };
-
-function ContactFields({ c }: { c?: ContactValues }) {
-  return (
-    <>
-      <label>
-        Name
-        <input name="name" required maxLength={200} defaultValue={c?.name} />
-      </label>
-      <label>
-        Title
-        <input name="title" placeholder="Recruiter, hiring manager…" maxLength={200} defaultValue={c?.title} />
-      </label>
-      <label>
-        Email
-        <input name="email" type="email" maxLength={200} defaultValue={c?.email} />
-      </label>
-      <label>
-        Profile link
-        <input name="url" type="url" placeholder="https://" maxLength={2000} defaultValue={c?.url} />
-      </label>
-    </>
   );
 }
 
@@ -222,17 +198,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                       <summary>
                         Edit<span className="sr-only"> {c.name}</span>
                       </summary>
-                      <form action={updateContact} className="edit-form">
-                        <input type="hidden" name="id" value={c.id} />
-                        <input type="hidden" name="applicationId" value={app.id} />
-                        <ContactFields c={c} />
-                        <div className="edit-actions">
-                          <SubmitButton className="btn secondary">Save contact</SubmitButton>
-                          <SubmitButton className="linklike danger" formAction={deleteContact} formNoValidate>
-                            Remove {c.name}
-                          </SubmitButton>
-                        </div>
-                      </form>
+                      <ContactForm appId={app.id} c={c} />
                     </details>
                   </li>
                 ))}
@@ -240,13 +206,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
             )}
             <details open={contacts.length === 0}>
               <summary>Add a contact</summary>
-              <form action={addContact} style={{ display: "grid", gap: 10 }}>
-                <input type="hidden" name="applicationId" value={app.id} />
-                <ContactFields />
-                <SubmitButton className="btn secondary" style={{ justifySelf: "start" }}>
-                  Add contact
-                </SubmitButton>
-              </form>
+              <ContactForm appId={app.id} />
             </details>
           </section>
 

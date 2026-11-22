@@ -42,6 +42,12 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.locator(".timeline .note-text")).toHaveText("Recruiter call went well, panel next week");
   await expect(page.locator(".timeline details.edit[open]")).toHaveCount(0);
   await page.getByLabel("Name").fill("Dana Reyes");
+  // The browser accepts any scheme in type=url; the server must say why it refused, and keep the typed values.
+  await page.getByLabel("Profile link").fill("javascript:alert(1)");
+  await page.getByRole("button", { name: "Add contact" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Profile link must start with http" })).toBeVisible();
+  await expect(page.getByLabel("Name")).toHaveValue("Dana Reyes");
+  await page.getByLabel("Profile link").fill("");
   await page.getByRole("button", { name: "Add contact" }).click();
   await page.locator(".contacts").getByText("Edit Dana Reyes").click();
   await page.locator(".contacts").getByLabel("Title").fill("Recruiter");

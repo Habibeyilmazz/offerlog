@@ -14,7 +14,7 @@ import { seedDemo } from "@/lib/seed.ts";
 import { endSession, requireUser } from "@/lib/session.ts";
 import { isStage, QUESTION_CATEGORIES } from "@/lib/stages.ts";
 import { importCsv, importJson } from "@/lib/transfer.ts";
-import { parseApplication, safeUrl, str, ValidationError } from "@/lib/validate.ts";
+import { parseApplication, parseContact, str, ValidationError } from "@/lib/validate.ts";
 
 export type FormState = { error?: string; message?: string };
 
@@ -70,28 +70,24 @@ export async function completeNextStep(form: FormData) {
   revalidatePath("/", "layout");
 }
 
-function contactFields(raw: Record<string, FormDataEntryValue>) {
-  const name = str(raw, "name");
-  const url = str(raw, "url", 2000);
-  return name && safeUrl(url) ? { name, title: str(raw, "title"), email: str(raw, "email"), url } : null;
-}
-
-export async function addContact(form: FormData) {
+export async function addContact(_prev: FormState, form: FormData): Promise<FormState> {
   await requireUser();
   const raw = fields(form);
-  const contact = contactFields(raw);
-  if (!contact) return;
-  data.addContact(db(), id(raw.applicationId), contact);
-  revalidatePath(`/applications/${raw.applicationId}`);
-}
-
-export async function updateContact(form: FormData) {
-  await requireUser();
-  const raw = fields(form);
-  const contact = contactFields(raw);
-  if (!contact) return;
-  data.updateContact(db(), id(raw.id), contact);
+  const contact = parseContact(raw);
+  if (!contact.ok) return { error: contact.error };
+  data.addContact(db(), id(raw.applicationId), contact.value);
   revalidatePath(`/applications/${id(raw.applicationId)}`);
+  return {};
+}
+
+export async function updateContact(_prev: FormState, form: FormData): Promise<FormState> {
+  await requireUser();
+  const raw = fields(form);
+  const contact = parseContact(raw);
+  if (!contact.ok) return { error: contact.error };
+  data.updateContact(db(), id(raw.id), contact.value);
+  revalidatePath(`/applications/${id(raw.applicationId)}`);
+  return {};
 }
 
 export async function deleteContact(form: FormData) {

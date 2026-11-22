@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIsoDate, parseApplication } from "./validate.ts";
+import { isIsoDate, parseApplication, parseContact } from "./validate.ts";
 
 describe("parseApplication", () => {
   it("applies defaults and normalises", () => {
@@ -24,5 +24,26 @@ describe("parseApplication", () => {
   it("validates calendar dates", () => {
     expect(isIsoDate("2028-02-29")).toBe(true);
     expect(isIsoDate("2027-02-29")).toBe(false);
+  });
+});
+
+describe("parseContact", () => {
+  it("accepts a full contact and trims it", () => {
+    expect(parseContact({ name: " Dana ", title: "Recruiter", email: "dana@example.com", url: "https://example.com/dana" })).toEqual({
+      ok: true,
+      value: { name: "Dana", title: "Recruiter", email: "dana@example.com", url: "https://example.com/dana" },
+    });
+    expect(parseContact({ name: "Dana" })).toMatchObject({ ok: true, value: { email: "", url: "" } });
+  });
+  it.each([
+    [{ name: "" }, "Name is required"],
+    [{ name: "Dana", url: "javascript:alert(1)" }, "http"],
+    [{ name: "Dana", url: "ftp://example.com" }, "http"],
+    [{ name: "Dana", email: "not an email" }, "Email"],
+    [{ name: "x".repeat(201) }, "longer than 200"],
+  ])("returns an error for %o instead of throwing", (raw, msg) => {
+    const r = parseContact(raw);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain(msg);
   });
 });
