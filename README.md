@@ -41,6 +41,8 @@ The database lives in the `offerlog-data` volume. No Node on the host? Run the s
 | `OFFERLOG_SECURE_COOKIE` | no | `true` forces the `Secure` cookie flag. It is set automatically when a proxy sends `X-Forwarded-Proto: https`. |
 | `TZ` | no | Time zone used for "due today" and "overdue" (Docker defaults to UTC). |
 
+Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and `X-Forwarded-Proto` headers: Next.js compares them with the browser's `Origin` before running a form action, and the session cookie is marked `Secure` when the proxy reports HTTPS.
+
 ## Features
 
 - **Board** with seven stages: wishlist, applied, screening, interview, offer, rejected, ghosted. Drag cards between columns, or use the stage menu on each card (works with keyboard and touch), and filter the board by company, role, place or source. An **Up next** strip lists next steps by due date and flags overdue ones.
