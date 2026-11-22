@@ -263,9 +263,9 @@ test("track an application end to end", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("link", { name: "Board" }).first().click();
 
-  // No axe-core violations on any page with data on it, in light and dark, on desktop and phone widths
+  // No axe-core violations on any page with data on it, in light and dark, on desktop and at 320px, the narrowest width WCAG 1.4.10 asks to fit
   for (const path of ["/", appPath, unbroken, "/applications/new", "/tailor", "/analytics", "/questions", "/data", "/no-such-page"]) {
-    for (const [colorScheme, width] of [["light", 1280], ["dark", 1280], ["light", 390]] as const) {
+    for (const [colorScheme, width] of [["light", 1280], ["dark", 1280], ["light", 320]] as const) {
       await page.setViewportSize({ width, height: 800 });
       await page.emulateMedia({ colorScheme });
       await page.goto(path);

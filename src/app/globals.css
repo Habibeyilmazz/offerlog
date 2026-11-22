@@ -440,6 +440,7 @@ textarea:hover {
 }
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   margin-top: 18px;
@@ -917,7 +918,8 @@ th.num {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  /* min(): one column never wider than the screen, so a 320px phone does not scroll sideways (WCAG 1.4.10). */
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 16px;
   align-items: start;
 }
