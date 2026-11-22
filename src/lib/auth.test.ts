@@ -5,9 +5,25 @@ import { clientKey, FailureLimiter } from "./rate-limit.ts";
 describe("password", () => {
   it("verifies the right password only", () => {
     const h = hashPassword("correct horse");
-    expect(h).toMatch(/^scrypt:[\w-]+:[\w-]+$/);
+    expect(h).toMatch(/^scrypt:16384:8:5:[\w-]+:[\w-]+$/);
     expect(verifyPassword("correct horse", h)).toBe(true);
     expect(verifyPassword("wrong horse", h)).toBe(false);
+  });
+  it("still accepts hashes from before the cost was stored (N=2^14, r=8, p=1)", async () => {
+    const { randomBytes, scryptSync } = await import("node:crypto");
+    const salt = randomBytes(16);
+    const legacy = `scrypt:${salt.toString("base64url")}:${scryptSync("old pass", salt, 32).toString("base64url")}`;
+    expect(verifyPassword("old pass", legacy)).toBe(true);
+    expect(verifyPassword("new pass", legacy)).toBe(false);
+  });
+  it("refuses a stored cost that is malformed or too expensive", () => {
+    const [, , , , salt, hash] = hashPassword("pw").split(":");
+    expect(verifyPassword("pw", `scrypt:16384:8:5:${salt}:${hash}`)).toBe(true);
+    expect(verifyPassword("pw", `scrypt:1048576:8:1:${salt}:${hash}`)).toBe(false);
+    expect(verifyPassword("pw", `scrypt:16384:8:99:${salt}:${hash}`)).toBe(false);
+    expect(verifyPassword("pw", `scrypt:1000:8:5:${salt}:${hash}`)).toBe(false);
+    expect(verifyPassword("pw", `scrypt:-1:8:5:${salt}:${hash}`)).toBe(false);
+    expect(verifyPassword("pw", `scrypt:0:0:0:${salt}:${hash}`)).toBe(false);
   });
   it("uses a fresh salt each time", () => {
     expect(hashPassword("x")).not.toBe(hashPassword("x"));
