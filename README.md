@@ -53,7 +53,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 - **Interview prep** per stage (screening, interview, offer), with the matching questions from your **question bank** listed next to your notes.
 - **Resume tailor**: paste a job description (or load one saved on an application) and your resume as plain text or Markdown. A local, deterministic report shows which skills and tools from the posting your resume covers or misses, seniority words on both sides, and repeated posting words you never use. With `ANTHROPIC_API_KEY` set, you can also ask Claude to rewrite specific bullet points toward the posting; it is told not to invent experience.
 - **Analytics**: funnel with stage-to-stage conversion, response rate and median time to reply per source, and applications per week against a weekly goal you set.
-- **Import and export**: full JSON backup and restore, and CSV for spreadsheets. Imports are validated and all-or-nothing.
+- **Import and export**: full JSON backup and restore, and CSV for spreadsheets (comma or semicolon separated). Imports are validated and all-or-nothing.
 - **Single-user login** with a hashed password, an HttpOnly session cookie and rate-limited sign-in.
 - **Light and dark theme** following your system setting, a phone layout where board columns snap one at a time, keyboard access throughout (skip link, visible focus, a stage menu on every card), and no animation when reduced motion is requested.
 
