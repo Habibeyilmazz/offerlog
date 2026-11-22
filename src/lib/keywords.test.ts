@@ -52,6 +52,13 @@ describe("gapReport", () => {
     // The same word typed with a combining accent (as macOS file names and some editors store it) still matches.
     expect(gapReport("Développeur développeur", "De\u0301veloppeur").otherTerms).toEqual([]);
   });
+  it("matches text pasted from PDFs and web pages: wrapped lines, non-breaking spaces, ligatures, full-width letters", () => {
+    expect(names(gapReport("Machine Learning", "machine\nlearning").skills.matched)).toEqual(["machine learning"]);
+    expect(names(gapReport("Machine Learning", "Machine  Learning").skills.matched)).toEqual(["machine learning"]);
+    expect(gapReport("Entry level role", "").seniority.job).toEqual(["entry level"]);
+    expect(names(gapReport("Apache Airflow", "Apache Airﬂow").tools.matched)).toEqual(["Airflow"]);
+    expect(names(gapReport("ＲＥＡＣＴ", "React").tools.matched)).toEqual(["React"]);
+  });
   it("is deterministic", () => {
     expect(gapReport(jd, resume)).toEqual(r);
   });

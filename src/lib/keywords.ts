@@ -181,7 +181,8 @@ function escapeRegex(s: string): string {
 
 // Word boundaries that understand symbols used in tech names ("C++", "C#", ".NET", "Node.js").
 function termRegex(alias: string, exactCase: boolean): RegExp {
-  return new RegExp(`(?<![\\w+#.])${escapeRegex(alias)}(?![\\w+#]|\\.\\w)`, exactCase ? "g" : "gi");
+  // A space in a name also matches a line break, a non-breaking space or several spaces (text pasted from PDFs and web pages).
+  return new RegExp(`(?<![\\w+#.])${escapeRegex(alias).replace(/ /g, "\\s+")}(?![\\w+#]|\\.\\w)`, exactCase ? "g" : "gi");
 }
 
 const MATCHERS = TERMS.map((t) => ({
@@ -216,7 +217,10 @@ function words(text: string): string[] {
   return text.normalize("NFC").toLowerCase().match(/\p{L}[\p{L}\p{M}\p{N}+#.-]*[\p{L}\p{M}\p{N}+#]|\p{L}/gu) ?? [];
 }
 
-export function gapReport(jobDescription: string, resume: string): GapReport {
+export function gapReport(jd: string, cv: string): GapReport {
+  // NFKC: PDF ligatures ("Airﬂow") and full-width letters ("ＲＥＡＣＴ") become the plain letters the terms use.
+  const jobDescription = jd.normalize("NFKC");
+  const resume = cv.normalize("NFKC");
   const skills = { matched: [] as TermHit[], missing: [] as TermHit[] };
   const tools = { matched: [] as TermHit[], missing: [] as TermHit[] };
   const known = new Set<string>();
