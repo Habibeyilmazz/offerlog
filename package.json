@@ -9,9 +9,9 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "dev": "next dev -p 4220",
+    "dev": "next dev -H 127.0.0.1 -p 4220",
     "build": "next build",
-    "start": "next start -p 4220",
+    "start": "next start -H 127.0.0.1 -p 4220",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",

@@ -21,7 +21,7 @@ npm run build
 npm start                                     # http://localhost:4220
 ```
 
-Sign in with the password you chose. On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it is only offered while there are no applications and no questions, because it replaces both). `npm run db:seed` does the same from the command line and replaces everything.
+Sign in with the password you chose. `npm start` listens on `127.0.0.1` only, because the app speaks plain HTTP; `npm start -- -H 0.0.0.0` opens it to your network, but a TLS reverse proxy is the safer way (see Docker below). On an empty board, **Load demo data** fills the tracker with fictional companies so you can look around (it is only offered while there are no applications and no questions, because it replaces both). `npm run db:seed` does the same from the command line and replaces everything.
 
 ### Docker
 
@@ -118,7 +118,6 @@ Not built yet:
 - A calendar subscription URL that stays in sync (today: download an `.ics` file and import it again after changes).
 - A user-editable keyword vocabulary for the resume tailor.
 - A manual light/dark switch (today the theme follows the system setting).
-- Keep the page when a delete, "Mark done" or weekly-goal save fails on a dropped connection (today these show the in-app error page and **Try again** brings the page back; reload to see whether the action went through).
 - Multiple users.
 
 ## License
