@@ -4,7 +4,29 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, launch round: making the repository presentable and honest for a first visitor. The README quickstart was followed literally on a fresh clone from GitHub (clone, `npm ci --ignore-scripts`, hash a password, build, start, sign in, load demo data, open every page): it works as written.
+Latest, feature round: calendar export. Using the demo board, the "Up next" reminders only existed inside offerlog, so a phone screen due tomorrow was easy to miss unless the app was open; calendar export was the top item on the roadmap that needs no new data.
+
+### Added
+
+- **Calendar export (.ics)**: **Download next steps (.ics)** on Import & export, and **Add to calendar** next to an application's next step (`/api/export?format=ics`, optionally `&id=<application>`; same session check and `no-store` as the other exports; 400 for a malformed id, 404 when that application has no open dated next step). Each open next step with a due date becomes an all-day event (`DTSTART`/`DTEND` as dates, so no time-zone shifts) with a 9:00 display reminder, the role and stage as its description, the posting link as `URL`, and `TRANSP:TRANSPARENT` so it does not block the day. Rejected and ghosted applications are left out, as on the board's Up next strip. UIDs are stable per application (`offerlog-application-<id>-next-step`), so calendars that match by UID update an event on re-import. Written by `nextStepsIcs` in `src/lib/ics.ts` (RFC 5545 escaping, CRLF, folding at 75 octets without splitting a UTF-8 character).
+- Tests: `src/lib/ics.test.ts` (event fields, filtering, empty calendar, month/year/leap-day ends, escaping that cannot add properties or events, folding of multi-byte text); the smoke test clicks **Add to calendar** and reads the downloaded file. The demo export and a file with commas, semicolons, backslashes, newlines and long Japanese/French text were also parsed with the Python `icalendar` library: every field round-tripped exactly.
+
+### Fixed
+
+- Security: a link containing a newline or tab, such as `https://x.example/a<newline>BEGIN:VEVENT`, passed validation because the URL parser silently drops those characters, and was stored as typed. In a calendar file it would have added lines of its own. `safeUrl` (`src/lib/validate.ts`) now refuses control characters, and the calendar writes the parser's one-line `href` in any case, for rows saved earlier.
+
+### Changed
+
+- README: calendar export under Features; the roadmap item is now a calendar subscription URL that stays in sync; the comparison no longer says there is no calendar integration at all. Screenshots of the application page (light and dark) and Import & export regenerated.
+
+### Notes for the next agent
+
+- Not built: a subscription feed. Calendar apps cannot send the session cookie, so it would need a secret per-feed token in the URL (and a way to rotate it), and Google Calendar cannot reach a server bound to `127.0.0.1` anyway. Re-importing a file does not remove events for steps marked done.
+- Not checked: importing the file into Google Calendar, Apple Calendar or Outlook themselves (no accounts here); the format was checked with a parser only.
+- The Codex review of this round could not run (usage limit); the control-character link bug above was found by hand while reviewing the URL line.
+- Still open from earlier rounds: the AI rewrite is only tested with a mocked client, delete/"Mark done" buttons show the in-app error page when offline (roadmap), the social preview image needs a manual upload, private vulnerability reporting is off, no manual theme switch, no `script-src` CSP, 4 dev-only drizzle-kit advisories.
+
+Earlier, launch round: making the repository presentable and honest for a first visitor. The README quickstart was followed literally on a fresh clone from GitHub (clone, `npm ci --ignore-scripts`, hash a password, build, start, sign in, load demo data, open every page): it works as written.
 
 ### Added
 
