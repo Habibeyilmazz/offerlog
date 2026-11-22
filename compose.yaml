@@ -3,7 +3,8 @@ services:
     build: .
     image: offerlog
     ports:
-      - "4220:4220"
+      # Loopback only: the app speaks plain HTTP. Put a TLS reverse proxy in front to reach it from other machines.
+      - "127.0.0.1:4220:4220"
     environment:
       # Generate with: node scripts/hash-password.ts >> .env
       OFFERLOG_PASSWORD_HASH: ${OFFERLOG_PASSWORD_HASH:?Set OFFERLOG_PASSWORD_HASH in .env (node scripts/hash-password.ts)}
