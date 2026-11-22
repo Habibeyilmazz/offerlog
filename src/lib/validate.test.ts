@@ -47,6 +47,10 @@ describe("parseContact", () => {
     [{ name: "Dana", url: "javascript:alert(1)" }, "http"],
     [{ name: "Dana", url: "ftp://example.com" }, "http"],
     [{ name: "Dana", email: "not an email" }, "Email"],
+    [{ name: "Dana", email: "dana@example.com?bcc=eve@example.net" }, "Email"],
+    [{ name: "Dana", email: "dana@example.com?cc=eve%40example.net" }, "Email"],
+    [{ name: "Dana", email: "dana@example.com&body=hi" }, "Email"],
+    [{ name: "Dana", email: "dana@example.com#x" }, "Email"],
     [{ name: "x".repeat(201) }, "longer than 200"],
   ])("returns an error for %o instead of throwing", (raw, msg) => {
     const r = parseContact(raw);

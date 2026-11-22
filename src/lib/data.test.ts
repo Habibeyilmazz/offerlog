@@ -186,6 +186,14 @@ describe("import/export", () => {
       /^Question 1: question is longer/,
     );
   });
+  it("checks imported contacts like the contact form, and skips nameless ones", () => {
+    const withContact = (c: object) => ({ app: "offerlog", applications: [{ company: "A", role: "B", contacts: [c] }] });
+    expect(() => importJson(d, withContact({ name: "Sam", email: "sam@example.com?bcc=eve@example.net" }))).toThrow(/^Application 1 contact: Email/);
+    expect(() => importJson(d, withContact({ name: "Sam", url: "javascript:alert(1)" }))).toThrow(/^Application 1 contact: Profile link/);
+    expect(listApplications(d)).toHaveLength(0);
+    importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B", contacts: [{ name: "" }, { name: "Sam", email: "sam@example.com", url: "https://example.com/sam" }] }] });
+    expect(getApplication(d, listApplications(d)[0].id)!.contacts).toMatchObject([{ name: "Sam", email: "sam@example.com", url: "https://example.com/sam" }]);
+  });
   it("refuses an application whose stage disagrees with its last stage change", () => {
     const app = { company: "A", role: "B", stage: "offer", events: [{ toStage: "applied", at: "2026-01-01T09:00:00Z" }] };
     expect(() => importJson(d, { app: "offerlog", applications: [app] })).toThrow(/^Application 1: stage is offer, but its last stage change is to applied/);

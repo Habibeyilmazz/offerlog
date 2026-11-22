@@ -75,7 +75,9 @@ export function parseContact(raw: Raw): Result<ContactInput> {
     const name = str(raw, "name");
     if (!name) return { ok: false, error: "Name is required." };
     const email = str(raw, "email");
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Email must look like name@example.com." };
+    // It becomes a mailto: link, where ? & % # would add recipients or a prefilled body (a@b.co?bcc=...).
+    if (email && !/^[^\s@?&%#/\\:;,<>"]+@[^\s@?&%#/\\:;,<>"]+\.[^\s@?&%#/\\:;,<>"]+$/.test(email))
+      return { ok: false, error: "Email must look like name@example.com." };
     const url = str(raw, "url", 2000);
     if (!safeUrl(url)) return { ok: false, error: "Profile link must start with http:// or https://." };
     return { ok: true, value: { name, title: str(raw, "title"), email, url } };

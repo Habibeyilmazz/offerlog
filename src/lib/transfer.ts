@@ -3,7 +3,7 @@ import { applications, contacts, events, notes, questions } from "../db/schema.t
 import { parseCsv, toCsv } from "./csv.ts";
 import { getWeeklyGoal, setWeeklyGoal } from "./data.ts";
 import { isStage, QUESTION_CATEGORIES } from "./stages.ts";
-import { isIsoDate, parseApplication, safeUrl, str, ValidationError } from "./validate.ts";
+import { isIsoDate, parseApplication, parseContact, str, ValidationError } from "./validate.ts";
 
 const CSV_COLUMNS = [
   ["company", "company"],
@@ -120,10 +120,11 @@ function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, 
     throw new Error(`${label}: stage is ${parsed.value.stage}, but its last stage change is to ${last.toStage}.`);
   for (const e of evs) tx.insert(events).values(e).run(); // one row per statement: SQLite caps variables per statement
   for (const c of asList(raw.contacts, `${label} contacts`)) {
-    const name = str(c, "name");
-    if (!name) continue;
-    const url = str(c, "url", 2000);
-    tx.insert(contacts).values({ applicationId: id, name, title: str(c, "title"), email: str(c, "email"), url: safeUrl(url) ? url : "" }).run();
+    if (!str(c, "name")) continue;
+    // The same checks as the contact form: an email is rendered as a mailto: link, so "a@b.co?bcc=..." must not get in.
+    const contact = parseContact(c);
+    if (!contact.ok) throw new Error(`${label} contact: ${contact.error}`);
+    tx.insert(contacts).values({ applicationId: id, ...contact.value }).run();
   }
   for (const n of asList(raw.notes, `${label} notes`)) {
     const body = str(n, "body", 20000);
