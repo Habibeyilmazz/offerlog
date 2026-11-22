@@ -47,6 +47,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 ## Features
 
 - **Board** with seven stages: wishlist, applied, screening, interview, offer, rejected, ghosted. Drag cards between columns, or use the stage menu on each card (works with keyboard and touch), and filter the board by company, role, place or source. An **Up next** strip lists next steps by due date and flags overdue ones.
+- **Waiting on a reply**: applications in applied, screening or interview with no news for 14 days or more (no stage change and no timeline note; prep notes do not count) are listed on the board, longest silence first. **Follow up** gives one a next step due today, so it moves to Up next and the calendar export; **Mark ghosted** moves it to Ghosted. Applications that already have a dated next step are left out. The 14 days are fixed.
 - **Applications** with company, role, posting link, salary range and currency, location and work mode (onsite, hybrid, remote), source, job description, and a next step with a due date.
 - **Timeline** per application: every stage change is recorded automatically, alongside your own dated notes. Marking a next step done logs it to the timeline. Notes can be edited in place and keep their original date.
 - **Correct the history**: analytics are only as good as the dates behind them, so each stage change on the timeline can be moved to the day it really happened (a reply you logged three days late), or removed when it was a mistake (a card dropped in the wrong column, which would otherwise count as an offer in the funnel forever). Removing the latest change moves the application back to its previous stage. When you add an application you were already working on, give the day it reached its stage; in a CSV import, the `created_at` column does the same.
@@ -61,7 +62,7 @@ Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and 
 
 | Board | Application detail | Resume tailor |
 | --- | --- | --- |
-| ![The board with up-next reminders and seven stage columns](docs/screenshots/board.png) | ![Application detail with timeline, contacts and prep](docs/screenshots/application.png) | ![Keyword gap report](docs/screenshots/tailor.png) |
+| ![The board with up-next reminders, applications waiting on a reply, and seven stage columns](docs/screenshots/board.png) | ![Application detail with timeline, contacts and prep](docs/screenshots/application.png) | ![Keyword gap report](docs/screenshots/tailor.png) |
 
 | Analytics | Question bank | Import & export |
 | --- | --- | --- |

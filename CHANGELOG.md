@@ -4,7 +4,25 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, second security round. Probed a running `next start` with demo data. A server action POST with a foreign `Origin` is refused (500, no effect). 60 parallel wrong passwords with 60 different `X-Forwarded-For` values got 29 "Wrong password." and 31 "Too many" (the global limit holds under concurrency). Signed-out requests to every page, the `?app=` tailor link, RSC requests, the `.ics` export and the `jobDescription` and `moveApplication` actions return nothing from the database (checked by grepping for demo company names; the database was unchanged). `/_next/image` refuses both the export URL and absolute URLs. Redirects are relative even with a forged `Host` or `X-Forwarded-Host`. The three pinned action SHAs match their tags (checked with `gh api`). No secrets turned up in the full git history. `npm audit` shows nothing for runtime dependencies.
+Latest, feature round: waiting on a reply. Using the demo board as a newcomer, the most common state of a job search, an application sent weeks ago with no answer, got no signal anywhere: Up next only shows steps the user remembered to set, and cards do not show their age, so stale applications sat in Applied until someone scanned every card's timeline.
+
+### Added
+
+- **Waiting on a reply** on the board: applications in applied, screening or interview whose last stage change or timeline note is 14 or more days old, longest silence first (the 8 longest are shown, with the total when there are more). Prep notes do not reset the clock; a note such as "Emailed the recruiter" or **Mark done** on a next step does. Applications with a dated next step are left out, since Up next shows them.
+- **Follow up** sets a next step "Send a follow-up" due today (an existing undated step keeps its text), which moves the application to Up next and into the calendar export. **Mark ghosted** moves it to Ghosted. Both use the failure-safe submit button, so offline they say so instead of replacing the page.
+- `lastActivity` in `src/lib/data.ts` (one grouped query over events and timeline notes) and `waitingOnReply` in `src/lib/followup.ts`, with unit tests for the threshold edge, excluded stages, which notes reset the clock and the dated/undated next step rule. The smoke test imports two old applications by CSV `created_at`, follows up on one, runs the axe scans with the list on the page and marks the other ghosted.
+
+### Changed
+
+- Demo data: Lumen Robotics and Harborview Bank were applied to 19 and 16 days ago (was 7 and 5), so the demo shows the new list. The weekly chart moves accordingly; README screenshots regenerated from the running app.
+
+### Notes for the next agent
+
+- The 14-day threshold is a constant (`FOLLOW_UP_DAYS`, marked `shortcut:`); make it a setting only if users ask. There is no snooze: following up and later pressing **Mark done** restarts the 14 days.
+- Codex review and `/security-review` were not run this round (see earlier notes); the two new actions check the session and validate the id like the others, and the ghosted button reuses the existing `moveApplication` action through `bind`.
+- Still open from earlier rounds: a 2,000-card board has about 28,000 DOM nodes; the AI rewrite is only tested with a mocked client; the social preview needs a manual upload; the base image is not digest-pinned; `docs/demo.gif` does not show this list.
+
+Earlier, second security round. Probed a running `next start` with demo data. A server action POST with a foreign `Origin` is refused (500, no effect). 60 parallel wrong passwords with 60 different `X-Forwarded-For` values got 29 "Wrong password." and 31 "Too many" (the global limit holds under concurrency). Signed-out requests to every page, the `?app=` tailor link, RSC requests, the `.ics` export and the `jobDescription` and `moveApplication` actions return nothing from the database (checked by grepping for demo company names; the database was unchanged). `/_next/image` refuses both the export URL and absolute URLs. Redirects are relative even with a forged `Host` or `X-Forwarded-Host`. The three pinned action SHAs match their tags (checked with `gh api`). No secrets turned up in the full git history. `npm audit` shows nothing for runtime dependencies.
 
 ### Fixed
 
