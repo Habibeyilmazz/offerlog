@@ -161,6 +161,15 @@ describe("import/export", () => {
     expect(exportCsv(other)).toBe(exportCsv(d));
     expect(listEvents(other)).toHaveLength(18);
   });
+  it("starts the CSV with a byte order mark, so Excel reads it as UTF-8", () => {
+    // Without it Excel opens "Zürich" as "ZÃ¼rich".
+    importCsv(d, "company,role,location\nA,B,Zürich\n");
+    const csv = exportCsv(d);
+    expect(csv.startsWith("\uFEFFcompany,")).toBe(true);
+    const other = openDb(":memory:");
+    importCsv(other, csv);
+    expect(getApplication(other, 1)!.app.location).toBe("Zürich");
+  });
   it("accepts camelCase headers and strips the formula guard", () => {
     importCsv(d, "Company,Role,Stage,nextStep\nAcme,Dev,applied,'=call\n");
     expect(getApplication(d, 1)!.app.nextStep).toBe("=call");

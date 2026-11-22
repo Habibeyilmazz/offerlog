@@ -23,7 +23,8 @@ const CSV_COLUMNS = [
 
 export function exportCsv(d: Db): string {
   const rows = d.select().from(applications).all();
-  return toCsv(
+  // The byte order mark makes Excel read UTF-8 instead of the system code page; the import drops it.
+  return "﻿" + toCsv(
     CSV_COLUMNS.map(([col]) => col),
     rows.map((r) => CSV_COLUMNS.map(([, key]) => r[key])),
   );
