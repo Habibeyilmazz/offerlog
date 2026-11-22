@@ -9,7 +9,7 @@ Track every application on a kanban board, keep notes and interview prep in one 
 
 ## Quickstart
 
-Needs Node.js 22 or newer.
+Needs Node.js 22.18 or newer (the helper scripts are TypeScript files that Node runs directly).
 
 ```sh
 git clone https://github.com/Habibeyilmazz/offerlog.git
@@ -29,7 +29,7 @@ node scripts/hash-password.ts >> .env   # the script has no dependencies, so no 
 docker compose up -d --build            # http://localhost:4220
 ```
 
-The database lives in the `offerlog-data` volume. No Node on the host? Run the script on any machine with Node 22 and copy the printed `OFFERLOG_PASSWORD_HASH=...` line into `.env`.
+The database lives in the `offerlog-data` volume. No Node on the host? Run the script on any machine with Node 22.18+ and copy the printed `OFFERLOG_PASSWORD_HASH=...` line into `.env`.
 
 ### Configuration
 

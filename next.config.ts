@@ -5,6 +5,8 @@ const config: NextConfig = {
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   serverExternalPackages: ["better-sqlite3"],
   poweredByHeader: false,
+  // Stop `next dev` from writing an AGENTS.md into every checkout.
+  agentRules: false,
   // Imports go through a server action; allow files a bit over the 5 MB the action accepts.
   experimental: { serverActions: { bodySizeLimit: "6mb" } },
 };
