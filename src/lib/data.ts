@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import type { Db } from "../db/index.ts";
 import { applications, contacts, events, notes, questions, settings } from "../db/schema.ts";
 import { onDay, shortDate, today } from "./format.ts";
@@ -43,6 +43,16 @@ export function listApplications(d: Db) {
 
 export function listEvents(d: Db) {
   return d.select().from(events).orderBy(asc(events.at)).all();
+}
+
+/** Each application's latest stage change or timeline note (prep notes are not news), by id. */
+export function lastActivity(d: Db): Map<number, string> {
+  const rows = d.all<{ id: number; at: string }>(sql`
+    SELECT application_id AS id, max(at) AS at FROM (
+      SELECT application_id, at FROM events
+      UNION ALL SELECT application_id, created_at FROM notes WHERE stage IS NULL
+    ) GROUP BY application_id`);
+  return new Map(rows.map((r) => [r.id, r.at]));
 }
 
 export function getApplication(d: Db, id: number) {
