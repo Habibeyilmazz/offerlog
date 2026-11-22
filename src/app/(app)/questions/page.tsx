@@ -5,6 +5,7 @@ import { listQuestions } from "@/lib/data.ts";
 import { requireUser } from "@/lib/session.ts";
 import { isStage, PREP_STAGES, QUESTION_CATEGORIES, STAGE_LABELS } from "@/lib/stages.ts";
 import { StagePill } from "../stage-pill.tsx";
+import { SubmitButton } from "../submit-button.tsx";
 import { QuestionForm } from "./question-form.tsx";
 
 export const metadata = { title: "Question bank" };
@@ -57,9 +58,11 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
                         </summary>
                         {q.answer && <p style={{ whiteSpace: "pre-wrap", marginBottom: 14 }}>{q.answer}</p>}
                         <QuestionForm q={q} />
-                        <form action={deleteQuestion} style={{ marginTop: 10 }}>
+                        <form style={{ marginTop: 10 }}>
                           <input type="hidden" name="id" value={q.id} />
-                          <button className="linklike danger small">Delete question</button>
+                          <SubmitButton className="linklike danger small" formAction={deleteQuestion}>
+                            Delete question
+                          </SubmitButton>
                         </form>
                       </details>
                     </li>

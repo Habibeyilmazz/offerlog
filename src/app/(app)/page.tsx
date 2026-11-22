@@ -2,11 +2,12 @@ import Link from "next/link";
 import { loadDemoData } from "@/app/actions.ts";
 import { db } from "@/db/index.ts";
 import { listApplications } from "@/lib/data.ts";
-import { due, money, place, today } from "@/lib/format.ts";
+import { due, money, place, plural, today } from "@/lib/format.ts";
 import { isEmptyTracker } from "@/lib/seed.ts";
 import { requireUser } from "@/lib/session.ts";
 import { STAGES, type Stage } from "@/lib/stages.ts";
 import { Board, type CardData } from "./board.tsx";
+import { SubmitButton } from "./submit-button.tsx";
 
 export const metadata = { title: "Board" };
 
@@ -37,7 +38,7 @@ export default async function BoardPage() {
         <div>
           <h1>Board</h1>
           <p className="muted">
-            {apps.length === 0 ? "Nothing tracked yet." : `${apps.length} applications, ${active} in progress. Drag a card or use its menu to move it.`}
+            {apps.length === 0 ? "Nothing tracked yet." : `${plural(apps.length, "application")}, ${active} in progress. Drag a card or use its menu to move it.`}
           </p>
         </div>
         <Link href="/applications/new" className="btn">
@@ -58,8 +59,10 @@ export default async function BoardPage() {
               Add application
             </Link>
             {canDemo && (
-              <form action={loadDemoData}>
-                <button className="btn secondary">Load demo data</button>
+              <form>
+                <SubmitButton className="btn secondary" formAction={loadDemoData}>
+                  Load demo data
+                </SubmitButton>
               </form>
             )}
             <Link href="/data">Import a file</Link>

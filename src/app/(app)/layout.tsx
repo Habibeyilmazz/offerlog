@@ -2,6 +2,7 @@ import { logout } from "@/app/actions.ts";
 import { requireUser } from "@/lib/session.ts";
 import { FocusKeeper } from "./focus-keeper.tsx";
 import { Nav } from "./nav.tsx";
+import { SubmitButton } from "./submit-button.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           offer<span>log</span>
         </div>
         <Nav />
-        <form action={logout}>
-          <button className="linklike">Sign out</button>
+        <form>
+          <SubmitButton className="linklike" formAction={logout}>
+            Sign out
+          </SubmitButton>
         </form>
       </aside>
       <main id="main" tabIndex={-1}>

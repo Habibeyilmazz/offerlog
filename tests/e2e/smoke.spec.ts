@@ -188,6 +188,17 @@ test("track an application end to end", async ({ page }) => {
   await expect(page.locator(".chip.miss", { hasText: "TypeScript" })).toBeVisible();
   await expect(page.locator(".chip.hit", { hasText: "React" })).toBeVisible();
 
+  // "Mark done" (and every delete button) offline says so next to the button instead of replacing the page
+  await page.goto(appPath);
+  await page.context().setOffline(true);
+  await page.getByRole("button", { name: "Mark done" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Not sent" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Acme Robotics", level: 1 })).toBeVisible();
+  await page.context().setOffline(false);
+  await page.getByRole("button", { name: "Mark done" }).click();
+  await expect(page.locator(".timeline")).toContainText("Done: Email the recruiter");
+  await expect(page.getByRole("button", { name: "Mark done" })).toHaveCount(0);
+
   // Analytics counts the reply
   await page.getByRole("link", { name: "Analytics" }).click();
   await expect(page.getByRole("cell", { name: "Referral" })).toBeVisible();
@@ -230,7 +241,11 @@ test("track an application end to end", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.emulateMedia({ colorScheme: "light" });
 
-  // Sign out ends the session
+  // Sign out ends the session (offline it says so and stays put)
+  await page.context().setOffline(true);
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Not sent" })).toBeVisible();
+  await page.context().setOffline(false);
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await page.request.get("/api/export?format=json")).status()).toBe(401);

@@ -5,6 +5,7 @@ import { getWeeklyGoal, listApplications, listEvents } from "@/lib/data.ts";
 import { pct, plural } from "@/lib/format.ts";
 import { requireUser } from "@/lib/session.ts";
 import { STAGE_LABELS } from "@/lib/stages.ts";
+import { SubmitButton } from "../submit-button.tsx";
 
 const days = (d: number | null) => (d == null ? "–" : `${Math.round(d * 10) / 10} d`);
 
@@ -99,12 +100,14 @@ export default async function AnalyticsPage() {
               </div>
             ))}
           </div>
-          <form action={setWeeklyGoal} className="inline-form" style={{ marginTop: 16 }}>
+          <form className="inline-form" style={{ marginTop: 16 }}>
             <label style={{ flex: "0 1 160px" }}>
               Weekly goal
               <input type="number" name="goal" min={1} max={100} defaultValue={goal} required />
             </label>
-            <button className="btn secondary">Save goal</button>
+            <SubmitButton className="btn secondary" formAction={setWeeklyGoal}>
+              Save goal
+            </SubmitButton>
           </form>
         </section>
       </div>

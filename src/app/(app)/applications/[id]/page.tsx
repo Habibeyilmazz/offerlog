@@ -106,9 +106,11 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                   Add to calendar
                 </a>
               )}
-              <form action={completeNextStep}>
+              <form>
                 <input type="hidden" name="id" value={app.id} />
-                <SubmitButton className="btn secondary">Mark done</SubmitButton>
+                <SubmitButton className="btn secondary" formAction={completeNextStep}>
+                  Mark done
+                </SubmitButton>
               </form>
             </div>
           )}
@@ -186,9 +188,11 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
               <p className="muted" style={{ marginBottom: 12 }}>
                 Removes {app.company} with its notes, contacts and history. This cannot be undone.
               </p>
-              <form action={deleteApplication}>
+              <form>
                 <input type="hidden" name="id" value={app.id} />
-                <SubmitButton className="btn danger">Delete application</SubmitButton>
+                <SubmitButton className="btn danger" formAction={deleteApplication}>
+                  Delete application
+                </SubmitButton>
               </form>
             </details>
           </section>

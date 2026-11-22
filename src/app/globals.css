@@ -208,6 +208,11 @@ p {
   color: #9aa6b5;
   padding: 8px 12px;
 }
+.sidebar .action-error {
+  /* The dark theme's --danger: readable on the dark sidebar in both themes. */
+  color: #ef8a7c;
+  padding: 0 12px;
+}
 .sidebar .linklike:hover {
   color: #fff;
 }
@@ -393,6 +398,13 @@ textarea:hover {
 .error {
   color: var(--danger);
   font-weight: 600;
+}
+/* A failed delete, "Mark done", goal or sign-out button (SubmitButton): the message goes under the button. */
+.action-error {
+  display: block;
+  margin-top: 6px;
+  max-width: 34ch;
+  font-size: 0.875rem;
 }
 .ok {
   color: var(--st-offer);
