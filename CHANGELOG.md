@@ -4,7 +4,47 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, feature round: waiting on a reply. Using the demo board as a newcomer, the most common state of a job search, an application sent weeks ago with no answer, got no signal anywhere: Up next only shows steps the user remembered to set, and cards do not show their age, so stale applications sat in Applied until someone scanned every card's timeline.
+Latest, second reliability round. The running app (`next start`, Chromium via Playwright) and `src/lib` were pushed with spreadsheet-style CSVs, Excel encodings, padded and mistyped dates, text pasted from PDFs, files over the limits, a 4.9 MB import, long unbroken links at 390px, stale tabs and piped script input. Each bug below was reproduced first (in the browser, or with a script against `src/lib`), got a failing vitest or smoke-test check, then the fix.
+
+### Fixed
+
+- Import: a date-only `created_at`, event or note date (`2026-01-05`) was read as UTC midnight, so west of UTC the application showed as added on January 4 and could fall into the previous week in analytics. Date-only values are now local midnight.
+- Import: a CSV saved by Excel as plain "CSV (Comma delimited)" (Windows-1252) was decoded as UTF-8 and "Zürich" was silently stored as "Z�rich". Bytes that are not valid UTF-8 and hold no valid multi-byte character are read as Windows-1252; a UTF-8 file with one stray byte stays UTF-8 (found by the review below).
+- Import: a hand-written CSV saying `Applied` or `Remote`, as the app shows them, was refused; stage and work mode are now case-insensitive (the error still quotes the cell as typed).
+- Import: a wrong 4.9 MB CSV added 160,563 applications in 13 s; the board then did not load within 30 s, and there is no bulk delete. One file may now hold at most 2,000 applications ("Split it into smaller files").
+- Import: a file over 6 MB was refused by Next.js before the action ran, and the page turned into the "connection dropped or server failed" screen. The file picker now flags anything over 5 MB in the browser ("That file is over 5 MB.").
+- Every textarea: browsers submit line breaks as CRLF but count them as one character for `maxlength`, so an 18,000-character job description in 1,500 lines arrived as 19,500 characters (a long one could be refused as over the limit the browser allowed) and notes were stored with CRLF. `str` in `src/lib/validate.ts` stores LF.
+- Dates: a year typed short into a date field arrived as `0526-02-11`; the board said "548148 days overdue" and the calendar file got a year-526 event. Dates must be in 1900-2999 (server check), and the date fields carry `min`/`max` so the browser flags it first.
+- Resume tailor: a resume pasted from a PDF with "machine⏎learning", a non-breaking space, "Airﬂow" (ligature) or "ＲＥＡＣＴ" (full-width) was reported as missing those terms. Spaces in a term match any whitespace, and both texts are NFKC-normalised before matching.
+- Stale tabs: moving a card that was deleted in another tab announced "Moved X to Screening."; it now says "X was deleted in another tab or window." Adding a note or contact to such an application hit a foreign-key error and showed "the connection dropped or the server failed" (retrying could never work), and editing a note, contact or question deleted elsewhere said "Saved." while the typed text was lost. All now say the record no longer exists and keep the text.
+- Layout: a long unbroken token (a pasted tracking link) in a next step, contact name or email, question or answer made the application page 3,000px wide and the question bank 24,000px wide at 390px. The one-column application layout is `minmax(0, 1fr)` and those texts wrap anywhere.
+- Board filter: "istanbul" did not find "İstanbul" (lower-casing adds a combining dot) and "zurich" did not find "Zürich"; matching now ignores case and accents (`matches` in `src/lib/format.ts`).
+- Analytics: "LinkedIn", "linkedin " and "LINKEDIN" were three rows in Response rate by source; they are one, labelled as the oldest application spells it.
+- `npm run db:seed` replaced a tracker full of real data without asking (it uses the same `data/offerlog.db` as `npm start`). It now refuses unless run as `npm run db:seed -- --force`; README and CONTRIBUTING say so.
+- `node scripts/hash-password.ts` with a password piped without a final newline (`printf %s "$pw" |`) or with empty input exited 13 with "unsettled top-level await" and printed nothing.
+
+### Changed
+
+- The CSV export starts with a UTF-8 byte order mark so Excel does not open "Zürich" as "ZÃ¼rich" (the import drops it; checked that the bytes are `EF BB BF`, not checked in Excel itself).
+
+### Added
+
+- Smoke test: a stale-tab move after a delete, a 7 MB file stopped in the browser, and a check that no page scrolls sideways at 1280px or 390px (with a long unbroken next step on the board's imported application). Unit tests for every fix above; the suite is 120 tests (was 106) and takes about 1-3 s, depending on machine load (two tests start the scripts as child processes).
+
+### Checked, nothing to change
+
+- Odd URLs signed in (`/tailor?app=abc`, `/questions?stage=bogus`, `/applications/%00`, repeated or upper-case export formats) answer 200, 400 or 404, never 500. A trailing space in a date (`"2026-01-05 "`) already parsed as local time.
+- `gapReport` on 30,000 characters of whitespace runs or repeated multi-word terms stays under 8 ms with the new `\s+` patterns.
+- The AI rewrite with an unreachable API answers "API error: Connection error." in 1.5 s.
+- A 5,000-note application page loads in 0.9 s (85,000 DOM nodes); left as is.
+
+### Notes for the next agent
+
+- Review: Codex was over its usage limit again (until 09:32 local), so `/code-review` (medium) reviewed this round's diff instead. Fixed from it: the whole-file Windows-1252 fallback, the source label changing with edit order, the lower-cased stage in errors. Not changed: a term can match across a single line break even between two bullets ("...React⏎Native speaker" counts as React Native), the accepted price of matching wrapped PDF text; the board filter folds each card on every keystroke (fine at the 2,000 cap); the 5 MB limit is written in both `actions.ts` and `import-form.tsx` (a `"use server"` file cannot export a constant).
+- Dates already saved outside 1900-2999 by the old code must be fixed before the form saves again (the browser points at the field), and a JSON backup holding one is refused by name.
+- Still open from earlier rounds: the 14-day follow-up threshold is a constant with no snooze; `docs/demo.gif` does not show the waiting list; the AI rewrite is only tested with a mocked client; the base image is not digest-pinned; a 2,000-card board has about 28,000 DOM nodes.
+
+Earlier, feature round: waiting on a reply. Using the demo board as a newcomer, the most common state of a job search, an application sent weeks ago with no answer, got no signal anywhere: Up next only shows steps the user remembered to set, and cards do not show their age, so stale applications sat in Applied until someone scanned every card's timeline.
 
 ### Added
 
