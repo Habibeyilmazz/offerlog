@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+First-run review: a fresh clone was set up by following the README literally, and the code was then reviewed.
+
+### Fixed
+
+- The Import & export page (`src/app/(app)/data/`) was never committed, because the `.gitignore` rule `data/` also matched it. A fresh clone returned 404 on `/data`. The rule is now `/data/`, and the smoke test imports a CSV through that page.
+- `npm run db:seed` now loads `.env.local`, so it seeds the same `OFFERLOG_DB` file the app uses.
+- The weekly analytics chart buckets weeks in the server's `TZ`, not UTC. With `TZ` ahead of UTC, an application sent early on a Monday used to count toward the previous week. Demo next-step dates are also local now, matching the "Due today/tomorrow" labels.
+- The README and `engines` now say Node 22.18+, which plain `node scripts/*.ts` needs.
+- `next dev` no longer writes an untracked `AGENTS.md` into the checkout (`agentRules: false`).
+
+### Added
+
+- The smoke test covers drag and drop on the board.
+
+### Notes for the next agent
+
+- Unit tests run with `TZ=Pacific/Auckland` (set in `vitest.config.ts`), so code that mixes UTC and local dates fails there. Build test dates with local constructors (`new Date(2026, 10, 22, 12)`), not `...Z` strings, when the local calendar day matters.
+- Never use bare directory names in `.gitignore` that could match folders under `src/`. Anchor them with a leading `/`.
+- Still not done: editing a note or contact in place, a dark theme, and a live test of the AI rewrite against the real API (it is only tested with a mocked client).
+
 ## [0.1.0] - 2026-11-22
 
 ### Added
