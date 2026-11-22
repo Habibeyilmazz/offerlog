@@ -4,7 +4,27 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, performance and accessibility round. Measured first with a Playwright script against `next start` (demo data, and a copy with 2,000 applications of about 4.9 KB job description each), axe-core 4.10.3 (WCAG 2.2 AA + best practice) on every page in light, dark and at 390px, and a keyboard-only walk through the board and the application page. Then the top offenders were fixed and measured again.
+Latest, first-run round: the repository was cloned fresh from GitHub into an empty folder and the README quickstart followed literally (`npm ci --ignore-scripts`, hash a password, build, `npm start`, sign in, add an application, load demo data, open every page, `npm run db:seed`). Everything worked as written; the fixes below are what a first user would still trip over.
+
+### Fixed
+
+- Offline (or on a server error), **Mark done**, **Delete application**, **Delete note**, **Delete contact**, **Remove this change**, **Delete question**, **Save goal**, **Load demo data** and **Sign out** replaced the page with the in-app error screen (listed on the roadmap since the launch round). `SubmitButton` now takes the action as `formAction`, catches a failure and shows "Not sent: the connection dropped or the server failed. Try again." under the button; the page, and anything typed elsewhere on it, stays. Redirecting actions (delete application, load demo data, sign out) still navigate when they succeed. Checked in Chromium offline, then online, for Load demo data, Mark done, Delete note, Delete application, Save goal, Delete question and Sign out (Delete contact and Remove this change use the same button); the smoke test covers **Mark done** and **Sign out**. A weekly-goal number typed before a failed save goes back to the saved goal.
+- Security: `npm start` and `npm run dev` listened on every network interface, so a fresh install served its plain-HTTP sign-in page to the whole Wi-Fi (Next.js even printed the LAN address), while compose binds Docker to loopback for exactly that reason. Both now listen on `127.0.0.1`; `npm start -- -H 0.0.0.0` opens it up (checked: the last `-H` wins). The README quickstart says so.
+- The board said "1 applications".
+
+### Checked, nothing to change
+
+- The AI rewrite request (`src/lib/ai.ts`) against the current Claude API guidance: model id, the `server-side-fallback-2026-07-01` beta with `fallbacks: "default"`, `output_config.effort`, `max_tokens` for a non-streaming call and the refusal check are all current. Still not run against the real API (no key here).
+- `scripts/hash-password.ts` with piped stdin (non-TTY) writes one clean `OFFERLOG_PASSWORD_HASH=` line; Node 22.23 runs the TypeScript scripts directly.
+
+### Notes for the next agent
+
+- New buttons that run an action with nothing typed: `<form><input type="hidden" .../><SubmitButton formAction={action}>`, never `<form action={action}>` (that one shows the error page when offline). CONTRIBUTING says so too.
+- `removeEvent` returns an error string from `src/lib/data.ts` (entry gone, first entry) that the server action ignores; the UI never offers those cases, so it was left.
+- Codex review unavailable again this round (usage limit until 09:32 local).
+- Still open: a 2,000-card board has about 28,000 DOM nodes; the AI rewrite is only tested with a mocked client; the social preview needs a manual upload; private vulnerability reporting is off; no manual theme switch; no `script-src` CSP; 4 dev-only drizzle-kit advisories.
+
+Earlier, performance and accessibility round. Measured first with a Playwright script against `next start` (demo data, and a copy with 2,000 applications of about 4.9 KB job description each), axe-core 4.10.3 (WCAG 2.2 AA + best practice) on every page in light, dark and at 390px, and a keyboard-only walk through the board and the application page. Then the top offenders were fixed and measured again.
 
 ### Measured (Chromium, local, median of 3 to 5 loads)
 
