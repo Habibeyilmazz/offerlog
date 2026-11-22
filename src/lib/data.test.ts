@@ -226,6 +226,7 @@ describe("import/export", () => {
       "Fjordline,Junior Developer,Interviewing,10/14/2026,https://example.com/1,On-site,LinkedIn,40k-45k,Second round booked\n" +
       "Pebble,Data Intern,No response,2026-09-20,,Fully remote,Handshake,,\n" +
       "Saffron,Backend Dev,Online assessment,,,,,,\n";
+    const due = "Company,Role,Due date,Job Description\nA,B,11/30/2026,Build APIs in Go\nC,D,2026-12-01,\n";
     expect(importCsv(d, sheet, "2026-11-22T12:00:00.000Z")).toEqual({ applications: 3, questions: 0, ignored: ["Salary"] });
     const [a, b, c] = [1, 2, 3].map((id) => getApplication(d, id)!);
     expect(a.app).toMatchObject({ company: "Fjordline", role: "Junior Developer", stage: "interview", url: "https://example.com/1", workMode: "onsite", source: "LinkedIn" });
@@ -235,6 +236,9 @@ describe("import/export", () => {
     expect(b.app).toMatchObject({ stage: "ghosted", workMode: "remote" });
     expect(b.notes).toEqual([]);
     expect(c.app.stage).toBe("screening");
+    importCsv(d, due, "2026-11-22T12:00:00.000Z");
+    expect([4, 5].map((id) => getApplication(d, id)!.app)).toMatchObject([{ nextStepDue: "2026-11-30", description: "Build APIs in Go" }, { nextStepDue: "2026-12-01" }]);
+    expect(() => importCsv(d, "company,role,next_step_due\nA,B,11/31/2026\n")).toThrow(/^Row 2 next step due: "11\/31\/2026" is not a valid date/);
   });
   it("lets the first of two columns for the same field win and lists the other as ignored", () => {
     expect(importCsv(d, "Company,Employer,Role\nAcme,Other,Dev\n").ignored).toEqual(["Employer"]);

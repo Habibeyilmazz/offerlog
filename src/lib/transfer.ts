@@ -2,6 +2,7 @@ import type { Db } from "../db/index.ts";
 import { applications, contacts, events, notes, questions } from "../db/schema.ts";
 import { parseCsv, toCsv } from "./csv.ts";
 import { getWeeklyGoal, setWeeklyGoal } from "./data.ts";
+import { today } from "./format.ts";
 import { isStage, QUESTION_CATEGORIES } from "./stages.ts";
 import { isIsoDate, parseApplication, parseContact, str, ValidationError } from "./validate.ts";
 
@@ -174,9 +175,10 @@ const CSV_ALIASES: Record<string, string> = {
   status: "stage", applicationstatus: "stage",
   link: "url", joblink: "url", joburl: "url", posting: "url", postingurl: "url", jobposting: "url",
   city: "location",
+  jobdescription: "description", description: "description",
   worktype: "workMode", workplace: "workMode", workplacetype: "workMode", locationtype: "workMode", arrangement: "workMode",
   foundvia: "source", foundon: "source", channel: "source", platform: "source",
-  nextaction: "nextStep", followup: "nextStep",
+  nextaction: "nextStep",
   duedate: "nextStepDue", nextactiondate: "nextStepDue", followupdate: "nextStepDue",
   date: "createdAt", dateapplied: "createdAt", applieddate: "createdAt", appliedon: "createdAt", applicationdate: "createdAt",
   notes: "notes", note: "notes", comments: "notes",
@@ -221,6 +223,8 @@ export function importCsv(d: Db, text: string, now = new Date().toISOString()): 
       });
       raw.stage = STAGE_WORDS[squash(String(raw.stage ?? ""))] ?? raw.stage;
       raw.workMode = WORK_MODE_WORDS[squash(String(raw.workMode ?? ""))] ?? raw.workMode;
+      // Spreadsheets write due dates as 11/30/2026 too: read them like created_at, except that they may lie ahead.
+      if (raw.nextStepDue) raw.nextStepDue = today(new Date(timestamp(raw.nextStepDue, "", `Row ${i + 2} next step due`, "2999-12-31T00:00:00.000Z")));
       // Dated with the row, so it does not count as news today and hide an old application from "waiting on a reply".
       raw.notes = [{ body: raw.notes, createdAt: raw.createdAt }];
       labelled(`Row ${i + 2}`, () => insertApplication(tx as unknown as Db, raw, `Row ${i + 2}`, now));
