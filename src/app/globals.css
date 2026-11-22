@@ -247,6 +247,11 @@ main {
 .page-head p {
   margin-top: 4px;
 }
+/* A long unbroken company or place wraps instead of widening the page. */
+.page-head > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 760px) {
   .shell {
@@ -485,6 +490,7 @@ textarea:hover {
 }
 .upnext strong {
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 .upnext .what {
   font-size: 0.85rem;
@@ -553,6 +559,8 @@ textarea:hover {
   display: grid;
   gap: 6px;
   cursor: grab;
+  /* "anywhere" (unlike break-word) also shrinks the min-content width, so a long unbroken name cannot widen the column. */
+  overflow-wrap: anywhere;
 }
 .card[aria-busy="true"] {
   opacity: 0.55;

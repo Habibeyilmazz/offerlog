@@ -147,12 +147,17 @@ test("track an application end to end", async ({ page }) => {
   await page.getByLabel("CSV or JSON file").setInputFiles({
     name: "apps.csv",
     mimeType: "text/csv",
-    buffer: Buffer.from("company,role,stage\nBramble Bank,Graduate Engineer,applied\n"),
+    buffer: Buffer.from(`company,role,stage\nBramble Bank,Graduate Engineer,applied\n${"Unbrokenname".repeat(12)},Dev,wishlist\n`),
   });
   await page.getByRole("button", { name: "Import file" }).click();
-  await expect(page.getByRole("status")).toHaveText("Imported 1 application.");
+  await expect(page.getByRole("status")).toHaveText("Imported 2 applications.");
   await page.getByRole("link", { name: "Board" }).first().click();
   await expect(page.getByRole("region", { name: "Applied" })).toContainText("Bramble Bank");
+  // A long unbroken name wraps inside its card instead of sliding under the other columns
+  await page.getByRole("link", { name: /^Unbrokenname/ }).click({ timeout: 5_000 });
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Unbrokenname");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole("link", { name: "Board" }).first().click();
 
   // Sign out ends the session
   await page.getByRole("button", { name: "Sign out" }).click();
