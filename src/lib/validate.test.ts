@@ -16,10 +16,14 @@ describe("parseApplication", () => {
     [{ company: "A", role: "B", workMode: "moon" }, "Work mode"],
     [{ company: "A", role: "B", nextStepDue: "2026-02-30" }, "YYYY-MM-DD"],
     [{ company: "A", role: "B", description: "x".repeat(20001) }, "longer than 20000"],
+    [{ company: { name: "A" }, role: "B" }, "company must be text"],
   ])("rejects %o", (raw, msg) => {
     const r = parseApplication(raw);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain(msg);
+  });
+  it("takes numbers from JSON as text", () => {
+    expect(parseApplication({ company: 3, role: "B", salaryMin: 85000 })).toMatchObject({ ok: true, value: { company: "3", salaryMin: 85000 } });
   });
   it("validates calendar dates", () => {
     expect(isIsoDate("2028-02-29")).toBe(true);
