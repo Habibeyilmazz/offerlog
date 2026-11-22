@@ -16,6 +16,7 @@ Latest, design and UX pass: every page was checked in real screenshots at 1440px
 
 ### Fixed
 
+- Security: the per-application page title added in this round looked up the application before checking the session, so a signed-out request to `/applications/<id>` got a 307 whose body still named the company and role. `generateMetadata` now calls `requireUser()` first, and the smoke test checks a signed-out response for the company name. Found by the Codex review.
 - On phones the board showed seven 158px slivers; columns now take 78% of the width and snap one at a time.
 - On phones, short pages (such as not-found) split the spare height between header and content, so the nav bar ballooned to about 360px.
 - `scripts/screenshots.mjs` loaded the tailor with `?app=1`, which is empty after a reseed; it now picks the job by name.
@@ -30,7 +31,7 @@ Latest, design and UX pass: every page was checked in real screenshots at 1440px
 - New colours go in as tokens in both the light block and the dark block; do not hard-code hex values in components. Stage colours are shared by both themes on purpose.
 - Phone overrides for components live in the last `@media (max-width: 760px)` block of `globals.css`, because an earlier media query loses to base rules declared after it.
 - Edit panels are `<details>` keyed by their saved content, so a successful save remounts them closed without client state.
-- Codex second review was tried twice this round and hit its usage limit both times.
+- A Codex review of this round's commits ran (after two usage-limit failures) and found the metadata leak above; nothing else was reported. Any new `generateMetadata` must call `requireUser()` before touching the database.
 - The AI rewrite is still only tested with a mocked client; no key was available.
 
 Earlier, first-run review: a fresh clone was set up by following the README literally, and the code was then reviewed.

@@ -26,6 +26,7 @@ test("track an application end to end", async ({ page }) => {
   await page.getByLabel("Job description").fill("Junior developer with React, TypeScript and Docker experience.");
   await page.getByRole("button", { name: "Add application" }).click();
   await expect(page.getByRole("heading", { name: "Acme Robotics", level: 1 })).toBeVisible();
+  const appPath = new URL(page.url()).pathname;
   await expect(page.getByText("$50K–$60K")).toBeVisible();
 
   // Dated note shows up in the timeline
@@ -102,4 +103,7 @@ test("track an application end to end", async ({ page }) => {
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect((await page.request.get("/api/export?format=json")).status()).toBe(401);
+  // A signed-out request must not leak application details, not even in the page title.
+  const leak = await page.request.get(appPath, { maxRedirects: 0 });
+  expect(await leak.text()).not.toContain("Acme Robotics");
 });

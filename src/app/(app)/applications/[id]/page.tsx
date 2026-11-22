@@ -15,6 +15,8 @@ type Entry =
   | { kind: "note"; key: string; at: string; id: number; body: string };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  // Metadata renders independently of the layout and page, so it needs its own session check.
+  await requireUser();
   const appId = Number((await params).id);
   const detail = Number.isSafeInteger(appId) ? getApplication(db(), appId) : null;
   return { title: detail ? `${detail.app.company}, ${detail.app.role}` : "Not found" };
