@@ -4,7 +4,27 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, design round. Every page was screenshotted from `next start` with demo data and with an empty database, at 1440px and 390px, in light and dark, plus a keyboard-only pass over the board. The app already had a consistent token system, visible focus rings, reduced-motion handling and good empty states; the fixes below are what still looked broken, ragged or inconsistent.
+Latest, second security round. Probed a running `next start` with demo data. A server action POST with a foreign `Origin` is refused (500, no effect). 60 parallel wrong passwords with 60 different `X-Forwarded-For` values got 29 "Wrong password." and 31 "Too many" (the global limit holds under concurrency). Signed-out requests to every page, the `?app=` tailor link, RSC requests, the `.ics` export and the `jobDescription` and `moveApplication` actions return nothing from the database (checked by grepping for demo company names; the database was unchanged). `/_next/image` refuses both the export URL and absolute URLs. Redirects are relative even with a forged `Host` or `X-Forwarded-Host`. The three pinned action SHAs match their tags (checked with `gh api`). No secrets turned up in the full git history. `npm audit` shows nothing for runtime dependencies.
+
+### Fixed
+
+- Security: the password hash used Node's scrypt defaults (N=2^14, r=8, p=1, about 23 ms per guess here), below OWASP's minimum. New hashes use p=5 (N=2^14, r=8, p=5 is one of OWASP's equivalent minimums: same 16 MB, about 107 ms) and store the cost as `scrypt:16384:8:5:<salt>:<hash>`. Old `scrypt:<salt>:<hash>` values still verify. Re-running `node scripts/hash-password.ts` upgrades a hash and signs out existing sessions. A stored cost above N=2^17, r=32 or p=16, or a malformed one, is refused instead of hashed.
+- Security: a contact email such as `sam@example.com?bcc=eve@example.net` or `...?cc=eve%40example.net` passed validation and became a `mailto:` link that silently adds recipients or a body. Emails may no longer contain `? & % # / \ : ; , < > "`.
+- Security: the JSON import skipped the contact checks, taking any email and silently dropping a bad profile link. Imported contacts now go through `parseContact`, and an invalid one stops the import with `Application N contact: ...` (all or nothing, as for other fields). Contacts without a name are still skipped. One behaviour change: an old backup holding a bad contact link is now refused instead of imported without the link.
+- Security (prompt injection): a pasted job description containing `</job_description>` could close its block and add text that reads as instructions. In the prompt, the tags `job_description`, `missing_keywords` and `bullets` inside pasted text are written as `&lt;...`, and the system prompt says the posting is data, not instructions. This is a mitigation, not a guarantee: the rewrite is still a suggestion the user reads before copying.
+
+### Checked, nothing to change
+
+- CI: `permissions: contents: read`, actions pinned to full SHAs, `persist-credentials: false`, `npm ci --ignore-scripts`. The Docker image runs as `node`; `.dockerignore` keeps `.env*` and databases out.
+- Login rate limit: the scrypt check stays synchronous, because the limiter relies on no other request running between its check and its count (comment added in `password.ts`).
+
+### Notes for the next agent
+
+- `/security-review` still cannot run (the agent's working directory is not a git repository), and Codex was over its usage limit again, so this round was reviewed by hand plus the probes above.
+- Not changed: the `node:22-bookworm-slim` base image is not pinned to a digest (pinning without Dependabot would freeze security updates); the SQLite file is created with the default umask (0644), which matters only on a host shared with other Unix users.
+- Still open: a 2,000-card board has about 28,000 DOM nodes; the AI rewrite is only tested with a mocked client; the social preview needs a manual upload; private vulnerability reporting is off; no manual theme switch; no `script-src` CSP; 4 dev-only drizzle-kit advisories; `docs/demo.gif` not regenerated.
+
+Earlier, design round. Every page was screenshotted from `next start` with demo data and with an empty database, at 1440px and 390px, in light and dark, plus a keyboard-only pass over the board. The app already had a consistent token system, visible focus rings, reduced-motion handling and good empty states; the fixes below are what still looked broken, ragged or inconsistent.
 
 ### Fixed
 
