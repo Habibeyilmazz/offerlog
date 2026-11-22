@@ -85,7 +85,4 @@ export const sessions = sqliteTable("sessions", {
 });
 
 export type Application = typeof applications.$inferSelect;
-export type Contact = typeof contacts.$inferSelect;
-export type Note = typeof notes.$inferSelect;
-export type StageEvent = typeof events.$inferSelect;
 export type Question = typeof questions.$inferSelect;

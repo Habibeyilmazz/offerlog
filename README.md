@@ -39,7 +39,7 @@ The database lives in the `offerlog-data` volume. No Node on the host? Run the s
 | `ANTHROPIC_API_KEY` | no | Turns on the AI bullet-point rewrite on the resume tailor page. Everything else works without it. |
 | `OFFERLOG_DB` | no | Path of the SQLite file. Default `./data/offerlog.db` (`/data/offerlog.db` in Docker). |
 | `OFFERLOG_SECURE_COOKIE` | no | `true` forces the `Secure` cookie flag. It is set automatically when a proxy sends `X-Forwarded-Proto: https`. |
-| `TZ` | no | Time zone used for "due today" and "overdue" (Docker defaults to UTC). |
+| `TZ` | no | Time zone used for "due today", "overdue" and the Monday-to-Sunday weeks in analytics (Docker defaults to UTC). |
 
 Behind a reverse proxy, forward the original `Host` (or `X-Forwarded-Host`) and `X-Forwarded-Proto` headers: Next.js compares them with the browser's `Origin` before running a form action, and the session cookie is marked `Secure` when the proxy reports HTTPS.
 

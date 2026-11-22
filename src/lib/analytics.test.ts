@@ -52,17 +52,20 @@ describe("responseBySource", () => {
 });
 
 describe("weekly", () => {
-  it("finds the Monday of the week", () => {
-    expect(weekStart(new Date("2026-11-22T12:00:00Z"))).toBe("2026-11-16"); // Sunday
-    expect(weekStart(new Date("2026-11-16T00:00:00Z"))).toBe("2026-11-16");
+  it("finds the Monday of the week in local time", () => {
+    expect(weekStart(new Date(2026, 10, 22, 12))).toBe("2026-11-16"); // Sunday
+    expect(weekStart(new Date(2026, 10, 16, 0, 0))).toBe("2026-11-16");
+    // Monday 00:30 in Auckland is still Sunday in UTC; it belongs to the new week.
+    expect(weekStart(new Date(2026, 10, 16, 0, 30))).toBe("2026-11-16");
+    expect(weekStart(new Date(2026, 10, 15, 23, 59))).toBe("2026-11-09");
   });
   it("buckets applied events into the last N weeks", () => {
-    const rows = weeklyApplied(events, new Date("2026-11-22T12:00:00Z"), 3);
+    const rows = weeklyApplied(events, new Date(2026, 10, 22, 12), 3);
     expect(rows).toEqual([{ week: "2026-11-02", count: 2 }, { week: "2026-11-09", count: 1 }, { week: "2026-11-16", count: 0 }]);
   });
   it("counts each application once, in the week it was sent", () => {
     const back = [ev(1, "applied", "2026-11-17"), ev(1, "screening", "2026-11-18"), ev(1, "applied", "2026-11-19"), ev(2, "interview", "2026-11-18")];
-    expect(weeklyApplied(back, new Date("2026-11-22T12:00:00Z"), 1)).toEqual([{ week: "2026-11-16", count: 2 }]);
+    expect(weeklyApplied(back, new Date(2026, 10, 22, 12), 1)).toEqual([{ week: "2026-11-16", count: 2 }]);
   });
   it("median", () => {
     expect(median([])).toBeNull();

@@ -122,11 +122,9 @@ export function responseBySource(apps: AppLite[], events: EventLite[]): SourceRo
     .sort((a, b) => b.applied - a.applied || a.source.localeCompare(b.source));
 }
 
-/** Monday (UTC) of the week containing `d`, as YYYY-MM-DD. */
+/** Monday of the week containing `d` in the server's time zone (TZ), as YYYY-MM-DD. */
 export function weekStart(d: Date): string {
-  const day = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
-  return day.toISOString().slice(0, 10);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7)).toLocaleDateString("sv-SE");
 }
 
 /** Applications sent per week for the last `weeks` weeks, oldest first. Each application counts once, in the week it was sent. */
