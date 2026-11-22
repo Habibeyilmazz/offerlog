@@ -36,6 +36,14 @@ describe("applications", () => {
     expect(getApplication(d, id)).toBeNull();
     expect(listEvents(d)).toEqual([]);
   });
+  it("returns false for a note or contact on an application deleted meanwhile (another tab)", () => {
+    const id = createApplication(d, input({ company: "A", role: "B" }));
+    expect(addNote(d, id, "hello", null)).toBe(true);
+    expect(addContact(d, id, { name: "Sam", title: "", email: "", url: "" })).toBe(true);
+    deleteApplication(d, id);
+    expect(addNote(d, id, "hello", null)).toBe(false);
+    expect(addContact(d, id, { name: "Sam", title: "", email: "", url: "" })).toBe(false);
+  });
   it("offers demo data only while there are no applications and no questions", () => {
     expect(isEmptyTracker(d)).toBe(true);
     saveQuestion(d, { question: "Why us?", category: "company", stage: "screening", answer: "my notes" });

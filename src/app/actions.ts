@@ -18,6 +18,8 @@ import { parseApplication, parseContact, pastDay, str, ValidationError } from "@
 
 export type FormState = { error?: string; message?: string };
 
+const GONE = "That application no longer exists. It may have been deleted in another tab.";
+
 const fields = (form: FormData) => Object.fromEntries(form.entries());
 
 function id(v: unknown): number {
@@ -38,7 +40,7 @@ export async function saveApplication(_prev: FormState, form: FormData): Promise
   let appId: number;
   if (form.get("id")) {
     appId = id(form.get("id"));
-    if (!data.updateApplication(db(), appId, parsed.value)) return { error: "That application no longer exists." };
+    if (!data.updateApplication(db(), appId, parsed.value)) return { error: GONE };
   } else {
     // Backfilling: the day the application reached its starting stage, if not today.
     const day = pastDay(fields(form), "stageDate", today());
@@ -107,7 +109,7 @@ export async function addContact(_prev: FormState, form: FormData): Promise<Form
   const raw = fields(form);
   const contact = parseContact(raw);
   if (!contact.ok) return { error: contact.error };
-  data.addContact(db(), id(raw.applicationId), contact.value);
+  if (!data.addContact(db(), id(raw.applicationId), contact.value)) return { error: GONE };
   revalidatePath(`/applications/${id(raw.applicationId)}`);
   return {};
 }
@@ -144,7 +146,7 @@ export async function addNote(_prev: FormState, form: FormData): Promise<FormSta
   const { body, error } = noteBody(raw);
   if (!body) return { error };
   const stage = str(raw, "stage");
-  data.addNote(db(), id(raw.applicationId), body, isStage(stage) ? stage : null);
+  if (!data.addNote(db(), id(raw.applicationId), body, isStage(stage) ? stage : null)) return { error: GONE };
   revalidatePath(`/applications/${id(raw.applicationId)}`);
   return {};
 }

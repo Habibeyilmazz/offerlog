@@ -127,8 +127,13 @@ export function removeEvent(d: Db, eventId: number, at = nowIso()): string | nul
   });
 }
 
-export function addContact(d: Db, applicationId: number, c: { name: string; title: string; email: string; url: string }) {
+const exists = (d: Db, id: number) => d.select({ id: applications.id }).from(applications).where(eq(applications.id, id)).get() !== undefined;
+
+/** False when the application no longer exists (deleted in another tab). */
+export function addContact(d: Db, applicationId: number, c: { name: string; title: string; email: string; url: string }): boolean {
+  if (!exists(d, applicationId)) return false;
   d.insert(contacts).values({ applicationId, ...c }).run();
+  return true;
 }
 
 export function updateContact(d: Db, id: number, c: { name: string; title: string; email: string; url: string }) {
@@ -139,8 +144,11 @@ export function deleteContact(d: Db, id: number) {
   d.delete(contacts).where(eq(contacts.id, id)).run();
 }
 
-export function addNote(d: Db, applicationId: number, body: string, stage: Stage | null, at = nowIso()) {
+/** False when the application no longer exists (deleted in another tab). */
+export function addNote(d: Db, applicationId: number, body: string, stage: Stage | null, at = nowIso()): boolean {
+  if (!exists(d, applicationId)) return false;
   d.insert(notes).values({ applicationId, body, stage, createdAt: at }).run();
+  return true;
 }
 
 /** Changes the text only; the note keeps its date and its place in the timeline. */
