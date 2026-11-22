@@ -101,10 +101,10 @@ export interface SourceRow {
 }
 
 export function responseBySource(apps: AppLite[], events: EventLite[]): SourceRow[] {
-  // "LinkedIn", "linkedin " and "LINKEDIN" are one source, shown as first spelled.
+  // "LinkedIn", "linkedin " and "LINKEDIN" are one source, shown as the oldest application spells it.
   const label = new Map<string, string>();
   const sourceOf = new Map(
-    apps.map((a) => {
+    [...apps].sort((a, b) => a.id - b.id).map((a) => {
       const name = a.source.trim().replace(/\s+/g, " ") || "Unknown";
       const key = name.toLowerCase();
       if (!label.has(key)) label.set(key, name);

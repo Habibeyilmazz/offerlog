@@ -8,7 +8,7 @@ describe("parseApplication", () => {
   });
   it.each([
     [{ role: "Dev" }, "Company"],
-    [{ company: "A", role: "B", stage: "hired" }, "stage"],
+    [{ company: "A", role: "B", stage: "Hired" }, 'Unknown stage "Hired"'], // as typed, to find it in the spreadsheet
     [{ company: "A", role: "B", url: "javascript:alert(1)" }, "http"],
     // new URL() drops the line break and accepts it; the stored text would still carry it into a calendar file
     [{ company: "A", role: "B", url: "https://x.example/a\nBEGIN:VEVENT" }, "http"],

@@ -16,6 +16,9 @@ describe("csv", () => {
     // Excel's plain "CSV (Comma delimited)" is not UTF-8; decoded as UTF-8, "Zürich" became "Z\uFFFDrich".
     expect(decodeText(Uint8Array.from([0x5a, 0xfc, 0x72, 0x69, 0x63, 0x68, 0x2c, 0x80]))).toBe("Zürich,€");
     expect(decodeText(new TextEncoder().encode("\uFEFFZürich,€"))).toBe("Zürich,€");
+    // A UTF-8 file with one stray byte stays UTF-8: only that byte is lost, not every accent in the file.
+    const mixed = Uint8Array.from([...new TextEncoder().encode("Zürich,"), 0x92, 0x0a]);
+    expect(decodeText(mixed)).toBe("Zürich,\uFFFD\n");
   });
   it("rejects an unterminated quote", () => {
     expect(() => parseCsv('"abc')).toThrow();

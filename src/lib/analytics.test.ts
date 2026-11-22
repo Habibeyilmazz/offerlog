@@ -52,6 +52,8 @@ describe("responseBySource", () => {
   it("counts sources typed with different case or spacing as one", () => {
     const apps = [{ id: 1, source: "LinkedIn" }, { id: 2, source: "linkedin " }, { id: 3, source: "LINKEDIN" }];
     expect(responseBySource(apps, events)).toEqual([{ source: "LinkedIn", applied: 3, replied: 2, rate: 2 / 3, medianDays: 6.5 }]);
+    // Shown as the oldest application spells it, whatever order the list comes in (it is sorted by last edit).
+    expect(responseBySource([...apps].reverse(), events)[0].source).toBe("LinkedIn");
   });
 });
 

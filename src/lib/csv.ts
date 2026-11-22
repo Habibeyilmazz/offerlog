@@ -1,10 +1,10 @@
-/** UTF-8 (a BOM is dropped), else Windows-1252, which Excel's plain "CSV (Comma delimited)" writes. */
+/**
+ * UTF-8 (a BOM is dropped), or Windows-1252, which Excel's plain "CSV (Comma delimited)" writes: chosen when the bytes
+ * are not valid UTF-8 and hold no valid multi-byte character, so a UTF-8 file with one stray byte keeps its accents.
+ */
 export function decodeText(bytes: Uint8Array): string {
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return new TextDecoder("windows-1252").decode(bytes);
-  }
+  const utf8 = new TextDecoder().decode(bytes);
+  return utf8.includes("\uFFFD") && !/[^\x00-\x7f\uFFFD]/.test(utf8) ? new TextDecoder("windows-1252").decode(bytes) : utf8;
 }
 
 /** Minimal RFC 4180 CSV: quoted fields, escaped quotes, CRLF or LF line endings, comma or semicolon separated. */
