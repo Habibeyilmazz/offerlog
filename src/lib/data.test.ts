@@ -164,6 +164,11 @@ describe("import/export", () => {
     expect(importCsv(d, "company;role;salary_min\r\nAcme, Inc.;Dev;50000\r\n").applications).toBe(1);
     expect(getApplication(d, 1)!.app).toMatchObject({ company: "Acme, Inc.", role: "Dev", salaryMin: 50000 });
   });
+  it("imports an application with thousands of stage changes", () => {
+    const events = Array.from({ length: 9000 }, (_, i) => ({ toStage: i % 2 ? "offer" : "applied", at: new Date(Date.UTC(2026, 0, 1) + i * 1000).toISOString() }));
+    expect(importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B", stage: "offer", events }] }).applications).toBe(1);
+    expect(listEvents(d)).toHaveLength(9000);
+  });
   it("names the record when a nested JSON field is invalid", () => {
     const long = "x".repeat(300);
     expect(() => importJson(d, { app: "offerlog", applications: [{ company: "A", role: "B", contacts: [{ name: long }] }] })).toThrow(
@@ -186,6 +191,8 @@ describe("import/export", () => {
     expect(() => importCsv(d, row("45000"), now)).toThrow(/not a valid date/); // a spreadsheet serial number, read as year 45000
     expect(() => importCsv(d, row("2027-01-01"), now)).toThrow(/Row 2 createdAt: "2027-01-01" is in the future/);
     expect(() => importCsv(d, row("2026-02-30"), now)).toThrow(/not a valid date/); // Date.parse rolls this over to March 2
+    expect(() => importCsv(d, row("02/30/2026"), now)).toThrow(/not a valid date/);
+    expect(() => importCsv(d, row("2026/02/30"), now)).toThrow(/not a valid date/);
     expect(importCsv(d, row("11/20/2026 9:30"), now).applications).toBe(1); // what a spreadsheet writes back is still fine
     expect(importCsv(d, row("2026-11-22T20:00:00Z"), now).applications).toBe(1); // a clock a few hours ahead is tolerated
   });

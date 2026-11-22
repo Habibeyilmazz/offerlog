@@ -70,7 +70,11 @@ function timestamp(v: unknown, fallback: string, what: string, now: string): str
   const t = Date.parse(s);
   const ymd = /^\d{4}-\d{2}-\d{2}/.exec(s)?.[0];
   // Date.parse turns "5" into 2001, a spreadsheet serial like "45000" into the year 45000, and Feb 30 into March 2.
-  if (Number.isNaN(t) || !/\d{4}/.test(s) || !/^\d{4}-/.test(new Date(t).toISOString()) || (ymd && !isIsoDate(ymd)))
+  // An all-numeric date like 02/30/2026 is local time; a rolled-over one reads a month and day that are not in the text.
+  const nums = s.match(/\d+/g)?.map(Number) ?? [];
+  const local = new Date(t);
+  const rolled = ymd ? !isIsoDate(ymd) : !/[a-z]/i.test(s) && !(nums.includes(local.getMonth() + 1) && nums.includes(local.getDate()));
+  if (Number.isNaN(t) || !/\d{4}/.test(s) || !/^\d{4}-/.test(new Date(t).toISOString()) || rolled)
     throw new Error(`${what}: "${s}" is not a valid date.`);
   // A day of slack for a backup made on a machine whose clock runs ahead.
   if (t > Date.parse(now) + 86_400_000) throw new Error(`${what}: "${s}" is in the future.`);
@@ -113,7 +117,7 @@ function insertApplication(tx: Db, raw: Record<string, unknown>, label: string, 
   const last = evs.reduce((a, b) => (b.at >= a.at ? b : a));
   if (last.toStage !== parsed.value.stage)
     throw new Error(`${label}: stage is ${parsed.value.stage}, but its last stage change is to ${last.toStage}.`);
-  tx.insert(events).values(evs).run();
+  for (const e of evs) tx.insert(events).values(e).run(); // one row per statement: SQLite caps variables per statement
   for (const c of asList(raw.contacts, `${label} contacts`)) {
     const name = str(c, "name");
     if (!name) continue;
