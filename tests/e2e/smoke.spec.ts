@@ -221,6 +221,11 @@ test("track an application end to end", async ({ page }) => {
   // Import page works and a CSV lands on the board
   await page.getByRole("link", { name: "Import & export" }).click();
   await expect(page.getByRole("heading", { name: "Import & export", level: 1 })).toBeVisible();
+  // A file over the server's request limit is stopped in the browser, instead of failing as a dropped connection
+  await page.getByLabel("CSV or JSON file").setInputFiles({ name: "huge.csv", mimeType: "text/csv", buffer: Buffer.alloc(7 * 1024 * 1024, "a") });
+  await page.getByRole("button", { name: "Import file" }).click();
+  expect(await page.getByLabel("CSV or JSON file").evaluate((el: HTMLInputElement) => el.validationMessage)).toBe("That file is over 5 MB.");
+  await expect(page.getByRole("heading", { name: "Import & export", level: 1 })).toBeVisible();
   await page.getByLabel("CSV or JSON file").setInputFiles({
     name: "apps.csv",
     mimeType: "text/csv",
