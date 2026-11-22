@@ -43,7 +43,7 @@ for (const [name, path] of shots) {
 // The dark theme follows the system setting.
 const dark = await signedIn({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
 await openApplication(dark);
-await dark.locator(".timeline details.edit summary").first().click();
+await dark.locator(".timeline li:has(.stage-dot) details.edit summary").first().click(); // redating a stage change
 await dark.screenshot({ path: `${out}/application-dark.png` });
 
 const phone = await signedIn({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });

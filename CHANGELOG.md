@@ -4,7 +4,25 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Latest, security pass: auth, sessions, input validation, injection and SSRF sinks, XSS, headers, git history, dependencies, CI and Docker defaults were reviewed, and each finding was checked against the running app before it was fixed.
+Latest, feature round: correcting stage history. Using the app as a newcomer showed two ways the analytics went wrong with no fix in the UI: a card moved to the wrong column and back (Applied, Offer, Applied) counted as an offer in the funnel for good, and every application entered after the fact was dated today, so the weekly chart and time to reply were wrong from day one.
+
+### Added
+
+- Each stage change on an application's timeline has an **Edit** panel: change its date, or **Remove this change** (not offered for the first entry). Redating keeps the local time of day; a date before the previous change or after the next one is refused with a message naming that change, and on a neighbour's day the time is nudged by a second so the order holds. Redating the first entry also moves the application's "Added" date. Removing re-links the following entries, drops a move straight back to the same stage, and sets the application's stage to its last remaining entry (`setEventDate`, `removeEvent` in `src/lib/data.ts`; actions `updateEventDate`, `removeEvent`).
+- The add-application form has a **Date** field: the day the application reached its stage, if not today. Future dates are refused (`pastDay` in `src/lib/validate.ts`).
+- Tests: redating (order, neighbour limits, nudging, never after now, first entry carries the application date), removing (misdrop no longer counted by `funnel`, re-linking, moving the stage back, first entry refused), `onDay` across the Auckland/UTC date line, `pastDay`; the smoke test backfills a date on a new application and removes a wrong move from the timeline.
+
+### Changed
+
+- README screenshots regenerated; the dark one now shows a stage change's date panel.
+
+### Notes for the next agent
+
+- Event order is by `at` (then id); `setEventDate` guarantees strictly increasing timestamps per application, which `analytics.ts` relies on to find the "sent" event.
+- `onDay` in `src/lib/format.ts` uses the server's `TZ`, like `today()` and the analytics weeks.
+- Still open from earlier rounds: the AI rewrite is only tested with a mocked client, no manual theme switch, no `script-src` CSP, 4 dev-only drizzle-kit advisories.
+
+Earlier, security pass: auth, sessions, input validation, injection and SSRF sinks, XSS, headers, git history, dependencies, CI and Docker defaults were reviewed, and each finding was checked against the running app before it was fixed.
 
 ### Fixed
 
