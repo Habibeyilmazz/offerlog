@@ -29,6 +29,11 @@ describe("parseApplication", () => {
     // A spreadsheet written by hand says "Applied", as the board does.
     expect(parseApplication({ company: "A", role: "B", stage: "Applied", workMode: "Remote" })).toMatchObject({ ok: true, value: { stage: "applied", workMode: "remote" } });
   });
+  it("counts a line break once, as the browser's maxlength does", () => {
+    // Browsers submit textarea line breaks as CRLF: 20,000 characters on screen arrive as 24,000.
+    const r = parseApplication({ company: "A", role: "B", description: "abcd\r\n".repeat(4000) });
+    expect(r).toMatchObject({ ok: true, value: { description: "abcd\n".repeat(3999) + "abcd" } });
+  });
   it("takes numbers from JSON as text", () => {
     expect(parseApplication({ company: 3, role: "B", salaryMin: 85000 })).toMatchObject({ ok: true, value: { company: "3", salaryMin: 85000 } });
   });

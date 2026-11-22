@@ -27,7 +27,8 @@ export function str(raw: Raw, key: string, max = 200): string {
   const v = raw[key];
   if (v == null) return "";
   if (typeof v === "object") throw new ValidationError(`${key} must be text.`);
-  const s = String(v).trim();
+  // Browsers submit textarea line breaks as CRLF but count them as one character for maxlength.
+  const s = String(v).replace(/\r\n?/g, "\n").trim();
   if (s.length > max) throw new ValidationError(`${key} is longer than ${max} characters.`);
   return s;
 }
